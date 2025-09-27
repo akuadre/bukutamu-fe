@@ -1,154 +1,166 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Import icons from lucide-react (lebih modern untuk React)
 import { 
     LayoutDashboard, 
     GraduationCap, 
     Users, 
     BookOpen, 
-    ChevronDown,
+    ChevronRight,
     Building,
     User,
-    ClipboardList
+    ClipboardList,
+    Info
 } from 'lucide-react';
 
-// Taruh gambar ikon di folder `public/gambar/`
-const userIcon = '/gambar/icon2.png';
+const logoIcon = '/gambar/icon2.png';
 
 const Sidebar = () => {
     const location = useLocation();
-    const currentPath = location.pathname;
+    const [openMenus, setOpenMenus] = useState({});
 
-    // State untuk dropdown, nilai awal ini untuk render pertama kali
-    const [siswaOpen, setSiswaOpen] = useState(currentPath.startsWith('/siswa') || currentPath.startsWith('/orangtua'));
-    const [pegawaiOpen, setPegawaiOpen] = useState(currentPath.startsWith('/pegawai') || currentPath.startsWith('/jabatan'));
-    const [bukuTamuOpen, setBukuTamuOpen] = useState(currentPath.startsWith('/bukutamu'));
-
-    // --- TAMBAHAN BARU ---
-    // useEffect ini akan mengawasi perubahan 'currentPath' (URL)
+    // Efek untuk membuka dropdown menu sesuai dengan URL saat ini
     useEffect(() => {
-        if (currentPath.startsWith('/siswa') || currentPath.startsWith('/orangtua')) {
-            setSiswaOpen(true);
-        }
-        if (currentPath.startsWith('/pegawai') || currentPath.startsWith('/jabatan')) {
-            setPegawaiOpen(true);
-        }
-        if (currentPath.startsWith('/bukutamu')) {
-            setBukuTamuOpen(true);
-        }
-    }, [currentPath]); // Dependency: Jalankan efek ini setiap kali currentPath berubah
+        const path = location.pathname;
+        const newOpenMenus = {};
 
-    // Fungsi untuk styling NavLink yang aktif
-    const getNavLinkClass = ({ isActive }) =>
-        `flex items-center justify-between p-2 rounded-lg transition-colors text-sm ${
+        if (path.startsWith('/siswa') || path.startsWith('/orangtua')) {
+            newOpenMenus.siswa = true;
+        }
+        if (path.startsWith('/pegawai') || path.startsWith('/jabatan')) {
+            newOpenMenus.pegawai = true;
+        }
+        if (path.startsWith('/bukutamu')) {
+            newOpenMenus.bukuTamu = true;
+        }
+        setOpenMenus(newOpenMenus);
+    }, [location.pathname]);
+
+    const handleMenuToggle = (menu) => {
+        setOpenMenus(prev => ({ ...prev, [menu]: !prev[menu] }));
+    };
+    
+    // Styling untuk link yang aktif dan tidak aktif
+    const getLinkClass = ({ isActive }) =>
+      `flex items-center justify-between w-full text-sm p-3 rounded-lg transition-all duration-200 ${
         isActive
-            ? 'bg-blue-100 text-blue-700 font-semibold'
-            : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
-        }`;
+          ? 'bg-sky-500/10 text-sky-300 font-semibold border-l-4 border-sky-400'
+          : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
+      }`;
+      
+    // Varian animasi untuk dropdown menu
+    const dropdownVariants = {
+        hidden: { opacity: 0, height: 0 },
+        visible: { opacity: 1, height: 'auto', transition: { duration: 0.3, ease: "easeOut" } },
+    };
 
     return (
-        <aside className="fixed top-16 left-0 w-72 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 shadow-sm overflow-y-auto">
-            {/* User Panel */}
-            <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center space-x-3">
-                    <img src={userIcon} alt="User" className="h-10 w-10 rounded-full" />
-                    <Link to="/about" className="font-medium text-gray-700 hover:text-blue-600 transition-colors">
-                        Tentang Aplikasi
-                    </Link>
-                </div>
+        <aside className="fixed top-0 left-0 w-72 h-full bg-[#1a254a] flex flex-col z-40">
+            {/* App Header */}
+            <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-700/50">
+                <img src={logoIcon} alt="App Logo" className="h-9 w-9" />
+                <Link to="/" className="text-xl font-bold text-white tracking-wide">
+                    GuestBook
+                </Link>
             </div>
 
             {/* Navigation Menu */}
-            <nav className="p-4 space-y-2">
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                <p className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu</p>
+
                 {/* Dashboard */}
-                <NavLink to="/" className={getNavLinkClass}>
-                    <div className="flex items-center">
-                        <LayoutDashboard size={20} className="text-gray-500" />
-                        <span className="ml-3">Dashboard</span>
+                <NavLink to="/" className={getLinkClass}>
+                    <div className="flex items-center gap-4">
+                        <LayoutDashboard size={20} />
+                        <span>Dashboard</span>
                     </div>
                 </NavLink>
 
-                {/* Siswa Menu */}
-                <div className="space-y-2">
-                    <button onClick={() => setSiswaOpen(!siswaOpen)} className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-100 text-gray-700 hover:text-blue-600 transition-colors">
-                        <div className="flex items-center">
-                            <GraduationCap size={20} className="text-gray-500" />
-                            <span className="ml-3">Siswa</span>
+                {/* Dropdown Siswa */}
+                <div className="space-y-1">
+                    <button onClick={() => handleMenuToggle('siswa')} className={getLinkClass({})}>
+                        <div className="flex items-center gap-4">
+                            <GraduationCap size={20} />
+                            <span>Siswa</span>
                         </div>
-                        <ChevronDown size={18} className={`transition-transform text-gray-500 ${siswaOpen ? 'rotate-180' : ''}`} />
+                        <ChevronRight size={16} className={`transition-transform ${openMenus.siswa ? 'rotate-90' : ''}`} />
                     </button>
-                    {siswaOpen && (
-                        <div className="pl-8 space-y-2">
-                            <NavLink to="/siswa" className={getNavLinkClass}>
-                                <div className="flex items-center gap-2">
-                                    <User size={18} className="text-gray-500" />
-                                    <span>Data Siswa</span>
-                                </div>
-                                <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">2000</span> {/* TODO: Ganti dengan data dari API */}
-                            </NavLink>
-                            <NavLink to="/orangtua" className={getNavLinkClass}>
-                                <div className="flex items-center gap-2">
-                                    <Users size={18} className="text-gray-500" />
-                                    <span>Data Orang Tua</span>
-                                </div>
-                                <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">98</span> {/* TODO: Ganti dengan data dari API */}
-                            </NavLink>
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {openMenus.siswa && (
+                            <motion.div 
+                                variants={dropdownVariants} 
+                                initial="hidden" 
+                                animate="visible" 
+                                exit="hidden" 
+                                className="pl-8 space-y-1 overflow-hidden"
+                            >
+                                <NavLink to="/siswa" className={getLinkClass}><span><User size={16} className='inline mr-2'/>Data Siswa</span></NavLink>
+                                <NavLink to="/orangtua" className={getLinkClass}><span><Users size={16} className='inline mr-2'/>Data Orang Tua</span></NavLink>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
-
-                {/* Pegawai Menu */}
-                <div className="space-y-2">
-                    <button onClick={() => setPegawaiOpen(!pegawaiOpen)} className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-100 text-gray-700 hover:text-blue-600 transition-colors">
-                        <div className="flex items-center">
-                            <Building size={20} className="text-gray-500" />
-                            <span className="ml-3">Pegawai</span>
+                
+                {/* Dropdown Pegawai */}
+                <div className="space-y-1">
+                    <button onClick={() => handleMenuToggle('pegawai')} className={getLinkClass({})}>
+                        <div className="flex items-center gap-4">
+                            <Building size={20} />
+                            <span>Pegawai</span>
                         </div>
-                        <ChevronDown size={18} className={`transition-transform text-gray-500 ${pegawaiOpen ? 'rotate-180' : ''}`} />
+                        <ChevronRight size={16} className={`transition-transform ${openMenus.pegawai ? 'rotate-90' : ''}`} />
                     </button>
-                    {pegawaiOpen && (
-                        <div className="pl-8 space-y-2">
-                            <NavLink to="/jabatan" className={getNavLinkClass}>
-                                <div className="flex items-center gap-2">
-                                    <ClipboardList size={18} className="text-gray-500" />
-                                    <span>Data Jabatan</span>
-                                </div>
-                                <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">8</span> {/* TODO: Ganti dengan data dari API */}
-                            </NavLink>
-                            <NavLink to="/pegawai" className={getNavLinkClass}>
-                                <div className="flex items-center gap-2">
-                                    <Users size={18} className="text-gray-500" />
-                                    <span>Data Pegawai</span>
-                                </div>
-                                <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">15</span> {/* TODO: Ganti dengan data dari API */}
-                            </NavLink>
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {openMenus.pegawai && (
+                            <motion.div 
+                                variants={dropdownVariants} 
+                                initial="hidden" 
+                                animate="visible" 
+                                exit="hidden" 
+                                className="pl-8 space-y-1 overflow-hidden"
+                            >
+                                <NavLink to="/jabatan" className={getLinkClass}><span><ClipboardList size={16} className='inline mr-2'/>Data Jabatan</span></NavLink>
+                                <NavLink to="/pegawai" className={getLinkClass}><span><Users size={16} className='inline mr-2'/>Data Pegawai</span></NavLink>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
-
-                {/* Buku Tamu Menu */}
-                <div className="space-y-2">
-                    <button onClick={() => setBukuTamuOpen(!bukuTamuOpen)} className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-100 text-gray-700 hover:text-blue-600 transition-colors">
-                        <div className="flex items-center">
-                            <BookOpen size={20} className="text-gray-500" />
-                            <span className="ml-3">Buku Tamu</span>
+                
+                {/* Dropdown Buku Tamu */}
+                <div className="space-y-1">
+                    <button onClick={() => handleMenuToggle('bukuTamu')} className={getLinkClass({})}>
+                        <div className="flex items-center gap-4">
+                            <BookOpen size={20} />
+                            <span>Buku Tamu</span>
                         </div>
-                        <ChevronDown size={18} className={`transition-transform text-gray-500 ${bukuTamuOpen ? 'rotate-180' : ''}`} />
+                        <ChevronRight size={16} className={`transition-transform ${openMenus.bukuTamu ? 'rotate-90' : ''}`} />
                     </button>
-                    {bukuTamuOpen && (
-                        <div className="pl-8 space-y-2">
-                            <NavLink to="/bukutamu" className={getNavLinkClass}>
-                                <div className="flex items-center gap-2">
-                                    <BookOpen size={18} className="text-gray-500" />
-                                    <span>Data Buku Tamu</span>
-                                </div>
-                                <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">50</span> {/* TODO: Ganti dengan data dari API */}
-                            </NavLink>
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {openMenus.bukuTamu && (
+                            <motion.div 
+                                variants={dropdownVariants} 
+                                initial="hidden" 
+                                animate="visible" 
+                                exit="hidden" 
+                                className="pl-8 space-y-1 overflow-hidden"
+                            >
+                                <NavLink to="/bukutamu" className={getLinkClass}><span><BookOpen size={16} className='inline mr-2'/>Data Buku Tamu</span></NavLink>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </nav>
+            
+            {/* Sidebar Footer */}
+            <div className='p-4 border-t border-gray-700/50'>
+                 <Link to="/about" className={getLinkClass({})}>
+                    <div className="flex items-center gap-4">
+                        <Info size={20} />
+                        <span>Tentang Aplikasi</span>
+                    </div>
+                </Link>
+            </div>
         </aside>
     );
 };
