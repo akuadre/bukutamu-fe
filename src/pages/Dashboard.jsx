@@ -250,7 +250,7 @@ const Dashboard = () => {
         )}
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-10">
         {loading ? <MainContentSkeleton /> : (
             <motion.div className="contents" variants={containerVariants} initial="hidden" animate="visible">
                 <motion.div variants={itemVariants} className="bg-white shadow-lg rounded-xl p-6 lg:col-span-2">
