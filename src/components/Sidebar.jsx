@@ -60,7 +60,7 @@ const Sidebar = () => {
             {/* App Header */}
             <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-700/50">
                 <img src={logoIcon} alt="App Logo" className="h-9 w-9" />
-                <Link to="/" className="text-xl font-bold text-white tracking-wide">
+                <Link to="/" className="text-xl font-bold text-white">
                     GuestBook
                 </Link>
             </div>
