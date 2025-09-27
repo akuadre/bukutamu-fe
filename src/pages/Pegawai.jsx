@@ -84,25 +84,32 @@ const Pegawai = () => {
       <table className="min-w-full w-full table-auto animate-pulse">
         <thead className="bg-gray-800 text-white text-center">
           <tr>
-            {['No', 'Nama Pegawai', 'JK', 'Jabatan', 'Agama', 'Kontak', 'Aksi'].map(h => 
-              <th key={h} className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">{h}</th>
-            )}
+            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">No</th>
+            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Nama Pegawai</th>
+            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">JK</th>
+            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Jabatan</th>
+            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Agama</th>
+            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Kontak</th>
+            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
           </tr>
         </thead>
         <tbody>
           {[...Array(rowsPerPage)].map((_, index) => (
             <tr key={index} className="border-b border-gray-200">
-              {[...Array(7)].map((_, cellIndex) => (
-                <td key={cellIndex} className="py-4 px-4">
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                </td>
-              ))}
+              <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
+              <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-3/4"></div></td>
+              <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-1/2"></div></td>
+              <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-2/3"></div></td>
+              <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-1/3"></div></td>
+              <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-5/6"></div></td>
+              <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
+
 
   return (
     <motion.div
