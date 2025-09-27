@@ -33,9 +33,13 @@ const Navbar = () => {
     }, []);
 
     const handleLogout = () => {
-        // TODO: Tambahkan logika logout di sini
-        console.log("Logout clicked!");
         setIsDropdownOpen(false);
+
+        // Hapus token dari localStorage
+        localStorage.removeItem("adminToken");
+
+        // Redirect ke login
+        window.location.href = "/login";
     }
 
     return (
