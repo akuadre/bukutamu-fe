@@ -1,122 +1,225 @@
-import { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Mail, Lock, Calendar, BookOpen, Loader, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+// Ganti dengan URL gambar background sekolahmu
+const schoolImageUrl = 'gambar/smkn1cimahi.jpg'; // Contoh URL dari smkn1cimahi.jpg
+
+// --- Animation Variants for Framer Motion ---
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: 'spring', stiffness: 100 },
+  },
+};
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [thnajaran, setThnajaran] = useState('');
+  const [thnajaranOptions, setThnajaranOptions] = useState([]);
+  
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
+  
+  const navigate = useNavigate();
+
+  // --- Simulasi Fetch Tahun Ajaran ---
+  useEffect(() => {
+    // Di aplikasi nyata, kamu akan fetch data ini dari API
+    // const fetchTahunAjaran = async () => {
+    //   const response = await axios.get('http://localhost:8000/api/tahun-ajaran');
+    //   setThnajaranOptions(response.data);
+    // };
+    // fetchTahunAjaran();
+
+    // Untuk sekarang, kita gunakan data dummy
+    const dummyOptions = [
+      { idthnajaran: '1', thnajaran: '2023/2024' },
+      { idthnajaran: '2', thnajaran: '2024/2025' },
+      { idthnajaran: '3', thnajaran: '2025/2026' },
+    ];
+    setThnajaranOptions(dummyOptions);
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (!thnajaran) {
+      setError('Silakan pilih tahun ajaran terlebih dahulu.');
+      return;
+    }
     setLoading(true);
-    setError("");
+    setError('');
 
     try {
-      // ganti sesuai endpoint backend kamu
-      const res = await axios.post("http://localhost:8000/api/admin/login", {
-        email,
-        password,
-      });
+      // --- UNCOMMENT BAGIAN INI UNTUK KONEKSI KE BACKEND ---
+      // const response = await axios.post('http://localhost:8000/api/login', {
+      //   email,
+      //   password,
+      //   idthnajaran: thnajaran,
+      // });
+      
+      // // Simpan token ke localStorage
+      // localStorage.setItem('adminToken', response.data.token);
 
-      console.log("Login berhasil:", res.data);
+      // --- Simulasi Login Berhasil ---
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      localStorage.setItem('adminToken', 'dummy-bearer-token');
+      
+      // Redirect ke dashboard
+      navigate('/');
 
-      // simpan token Bearer
-      localStorage.setItem("adminToken", res.data.token);
-
-      // redirect (kalau pake react-router-dom v6)
-      window.location.href = "/dashboard";
     } catch (err) {
+      setError(err.response?.data?.message || 'Email atau Password salah!');
       console.error(err);
-      setError(
-        err.response?.data?.message ||
-        "Email atau password salah!"
-      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100 p-4 font-sans">
-      <div className="relative w-full max-w-6xl h-[720px] bg-white rounded-3xl shadow-xl overflow-hidden flex">
+    <div className="min-h-screen w-full bg-gray-100 flex items-center justify-center p-4 lg:p-8">
+      <motion.div
+        className="relative w-full max-w-5xl h-auto lg:h-[650px] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row"
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      >
         {/* Left Side (Form) */}
-        <div className="flex-1 flex flex-col justify-center p-16">
-          <div className="absolute top-16 left-16 flex items-center space-x-2">
-            <svg
-              className="h-6 w-6 text-emerald-500"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-1-8h2v-4h-2v4zm0 6h2v-2h-2v2z" />
-            </svg>
-            <span className="font-bold text-gray-800">MulyaJaya app.</span>
-          </div>
+        <motion.div
+          className="w-full lg:w-1/2 flex flex-col justify-center p-8 sm:p-12"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div variants={itemVariants} className="flex items-center gap-3 mb-8">
+            <BookOpen className="w-8 h-8 text-sky-500" />
+            <h1 className="text-2xl font-bold text-gray-800">GuestBook Admin</h1>
+          </motion.div>
 
-          <div className="flex flex-col space-y-16">
-            <div>
-              <p className="text-sm text-gray-500 uppercase tracking-widest mb-1">
-                Welcome back, admin!
-              </p>
-              <h1 className="text-4xl font-extrabold text-gray-900 leading-tight">
-                Login to your account
-              </h1>
-              <p className="text-gray-500 mt-2">
-                Mulya Jaya Admin Web
-                
-              </p>
-            </div>
+          <motion.div variants={itemVariants}>
+            <h2 className="text-4xl font-extrabold text-gray-900">Selamat Datang!</h2>
+            <p className="text-gray-500 mt-2">Silakan masuk untuk mengelola sistem.</p>
+          </motion.div>
+          
+          <form onSubmit={handleLogin} className="mt-8 space-y-5">
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-md flex items-center gap-3 text-sm"
+              >
+                <AlertCircle className="w-5 h-5"/>
+                <span>{error}</span>
+              </motion.div>
+            )}
+            
+            <motion.div variants={itemVariants} className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition duration-200"
+              />
+            </motion.div>
 
-            {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-6">
-              {error && (
-                <p className="text-red-500 text-sm text-center">{error}</p>
-              )}
+            <motion.div variants={itemVariants} className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition duration-200"
+              />
+            </motion.div>
+            
+            <motion.div variants={itemVariants} className="relative">
+              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <select
+                value={thnajaran}
+                onChange={(e) => setThnajaran(e.target.value)}
+                required
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition duration-200 appearance-none"
+              >
+                <option value="" disabled>Pilih Tahun Ajaran</option>
+                {thnajaranOptions.map((opt) => (
+                  <option key={opt.idthnajaran} value={opt.idthnajaran}>
+                    {opt.thnajaran}
+                  </option>
+                ))}
+              </select>
+            </motion.div>
 
-              <div className="relative">
-                <input
-                  type="email"
-                  id="email"
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="relative">
-                <input
-                  type="password"
-                  id="password"
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-
+            <motion.div variants={itemVariants}>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 px-6 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
+                className="w-full flex items-center justify-center py-3 px-6 rounded-lg bg-sky-500 text-white font-semibold hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-300 disabled:bg-sky-300"
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? <Loader className="animate-spin w-6 h-6" /> : 'Masuk'}
               </button>
-            </form>
-          </div>
-        </div>
+            </motion.div>
+          </form>
+        </motion.div>
 
-        {/* Right Side (Image & SVG) */}
+        {/* Right Side (Image) */}
         <div className="relative flex-1 hidden lg:block">
           <img
-            src="https://bsg-i.nbxc.com/product/ef/43/18/b49a090095d84f6fc35f8bf257.jpg"
-            alt="Login illustration"
-            className="absolute inset-0 h-full w-full object-cover rounded-3xl"
+            src={schoolImageUrl}
+            alt="SMKN 1 Cimahi"
+            className="absolute inset-0 h-full w-full object-cover"
           />
+          <div className="absolute inset-0 bg-gradient-to-br from-sky-500/60 to-blue-800/70 flex flex-col items-center justify-center p-12 text-white text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+            >
+              <motion.img
+                src="gambar/iconsekolah.png"
+                alt="Icon Sekolah"
+                className="w-32 h-32 object-contain mx-auto mb-4"
+                whileHover={{
+                  scale: 1.15,
+                  opacity: 0.9,
+                  y: -10,
+                  dropShadow: "0px 8px 24px rgba(0,0,0,0.25)"
+                }}
+                transition={{ type: "spring", stiffness: 300 }}
+              />
+              <h2 className="text-3xl font-bold leading-tight">
+                Sistem Buku Tamu Digital
+              </h2>
+              <p className="mt-2 text-xl font-semibold text-white">
+                SMKN 1 Cimahi
+              </p>
+              <p className="mt-4 text-lg opacity-90">
+                Mencatat dan mengelola kunjungan tamu dengan lebih efisien, modern, dan terstruktur.
+              </p>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
