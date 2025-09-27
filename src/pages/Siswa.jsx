@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Search, Edit, Trash2, PlusCircle, XCircle, CheckCircle, AlertTriangle } from "lucide-react";
+import { motion } from 'framer-motion';
+
+// --- Animation Variants for Framer Motion ---
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+// --- End Animation Variants ---
 
 // --- DUMMY DATA ---
 const dummySiswa = [
@@ -44,7 +57,7 @@ const Siswa = () => {
         const dataWithNo = dummySiswa.map((item, index) => ({ ...item, no: index + 1 }));
         setSiswa(dataWithNo);
         setLoading(false);
-    }, 1000);
+    }, 1500); // Sedikit lebih lama untuk melihat efek skeleton
   };
 
   useEffect(() => { fetchSiswa() }, []);
@@ -68,7 +81,6 @@ const Siswa = () => {
         setShowAddModal(false);
         setIsSubmitting(false);
         showNotif('success', 'Data siswa berhasil ditambahkan!');
-        // Panggil fetchSiswa() lagi jika sudah terhubung API
     }, 1000);
   };
 
@@ -109,8 +121,7 @@ const Siswa = () => {
             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NIS</th>
             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NISN</th>
             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Nama Siswa</th>
-            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tempat Lahir</th>
-            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tgl Lahir</th>
+            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tempat, Tgl Lahir</th>
             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">JK</th>
             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Alamat</th>
             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tahun Masuk</th>
@@ -123,11 +134,10 @@ const Siswa = () => {
                 <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
                 <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
                 <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
-                <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
-                <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
                 <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-3/4"></div></td>
-                <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
                 <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-5/6"></div></td>
+                <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
+                <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-full"></div></td>
                 <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
                 <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
             </tr>
@@ -139,7 +149,6 @@ const Siswa = () => {
 
   return (
     <>
-      {/* --- Notification Modal --- */}
       {showNotification && (
           <div className="fixed top-20 right-5 z-50 animate-fade-in-down">
               <div className={`p-4 rounded-lg shadow-lg flex items-center text-white ${notificationMessage.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
@@ -149,27 +158,32 @@ const Siswa = () => {
           </div>
       )}
 
-      <div className="bg-white shadow-lg rounded-lg p-6">
-        <div className="mb-4 border-b pb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Manajemen Data Siswa</h1>
-          <p className="text-gray-600 text-sm mt-1">Kelola daftar siswa Anda di halaman ini.</p>
-        </div>
+      <motion.div 
+        className="bg-white shadow-lg rounded-lg p-6"
+        initial={{ opacity: 0, y: -40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div variants={containerVariants} initial="hidden" animate="visible">
+            <div className="mb-4 border-b pb-4">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Manajemen Data Siswa</h1>
+              <p className="text-gray-600 text-sm mt-1">Kelola daftar siswa Anda di halaman ini.</p>
+            </div>
 
-        {/* --- Search and Add Button --- */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input type="text" placeholder="Cari siswa..." value={filterText} onChange={(e) => setFilterText(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none" />
-          </div>
-          <button onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition flex items-center justify-center shadow-md">
-            <PlusCircle className="w-5 h-5 mr-2" />
-            <span>Tambah Data Siswa</span>
-          </button>
-        </div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input type="text" placeholder="Cari siswa..." value={filterText} onChange={(e) => setFilterText(e.target.value)}
+                  className="pl-10 pr-4 py-2 border rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none" />
+              </div>
+              <button onClick={() => setShowAddModal(true)}
+                className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition flex items-center justify-center shadow-md">
+                <PlusCircle className="w-5 h-5 mr-2" />
+                <span>Tambah Data Siswa</span>
+              </button>
+            </div>
+        </motion.div>
 
-        {/* --- Table --- */}
         {loading ? <LoadingTable /> : (
             <div className="overflow-x-auto text-sm">
                 <table className="min-w-full w-full table-auto border-collapse">
@@ -179,8 +193,7 @@ const Siswa = () => {
                             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NIS</th>
                             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NISN</th>
                             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Nama Siswa</th>
-                            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tempat Lahir</th>
-                            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tgl Lahir</th>
+                            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tempat, Tgl Lahir</th>
                             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">JK</th>
                             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Alamat</th>
                             <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Agama</th>
@@ -196,8 +209,7 @@ const Siswa = () => {
                             <td className="px-3 py-3 whitespace-nowrap text-center">{s.nis}</td>
                             <td className="px-3 py-3 whitespace-nowrap text-center">{s.nisn}</td>
                             <td className="px-3 py-3 whitespace-nowrap font-medium text-gray-900">{s.namasiswa}</td>
-                            <td className="px-3 py-3 whitespace-nowrap">{s.tempatlahir}</td>
-                            <td className="px-3 py-3 whitespace-nowrap">{new Date(s.tgllahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</td>
+                            <td className="px-3 py-3 whitespace-nowrap">{s.tempatlahir}, {new Date(s.tgllahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</td>
                             <td className="px-3 py-3 whitespace-nowrap text-center">{s.jk}</td>
                             <td className="px-3 py-3 whitespace-nowrap">{s.alamat}</td>
                             <td className="px-3 py-3 whitespace-nowrap">{s.agama?.agama}</td>
@@ -220,15 +232,12 @@ const Siswa = () => {
             </div>
         )}
 
-        {/* --- Pagination --- */}
         <div className="flex justify-between items-center p-2 text-sm text-gray-600 border-t mt-4">
             <div className="flex items-center gap-2">
                 <span>Baris per halaman:</span>
                 <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
                     className="px-2 py-1 bg-transparent focus:outline-none border rounded-md">
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
+                    <option value={5}>5</option> <option value={10}>10</option> <option value={25}>25</option>
                 </select>
             </div>
             <div className="flex items-center gap-2">
@@ -243,9 +252,8 @@ const Siswa = () => {
                 </button>
             </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* --- Add Modal --- */}
       {showAddModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 p-4">
           <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -257,7 +265,6 @@ const Siswa = () => {
               <input name="nis" placeholder="NIS" className="w-full border p-2 rounded" required/>
               <input name="nisn" placeholder="NISN" className="w-full border p-2 rounded" required/>
               <input name="namasiswa" placeholder="Nama Siswa" className="w-full border p-2 rounded" required/>
-              {/* Add other fields as needed */}
               <div className="flex justify-end gap-3 mt-6">
                 <button type="button" onClick={() => setShowAddModal(false)} className="px-6 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">Batal</button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300">
@@ -269,7 +276,6 @@ const Siswa = () => {
         </div>
       )}
 
-      {/* --- Edit Modal --- */}
       {showEditModal && editingSiswa && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 p-4">
           <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -281,7 +287,6 @@ const Siswa = () => {
               <input name="nis" defaultValue={editingSiswa.nis} placeholder="NIS" className="w-full border p-2 rounded" required/>
               <input name="nisn" defaultValue={editingSiswa.nisn} placeholder="NISN" className="w-full border p-2 rounded" required/>
               <input name="namasiswa" defaultValue={editingSiswa.namasiswa} placeholder="Nama Siswa" className="w-full border p-2 rounded" required/>
-              {/* Add other fields as needed */}
               <div className="flex justify-end gap-3 mt-6">
                 <button type="button" onClick={() => setShowEditModal(false)} className="px-6 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">Batal</button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300">
@@ -293,7 +298,6 @@ const Siswa = () => {
         </div>
       )}
 
-      {/* --- Delete Confirmation Modal --- */}
       {showDeleteConfirmModal && siswaToDelete && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 p-4">
           <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">

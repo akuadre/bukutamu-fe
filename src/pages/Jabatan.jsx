@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Search, Edit, Trash2, PlusCircle, XCircle } from "lucide-react";
+import { motion } from 'framer-motion';
+
+// --- Animation Variants for Framer Motion ---
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+// --- End Animation Variants ---
 
 // --- DUMMY DATA ---
 // Nanti, data ini akan diambil dari API Laravel
@@ -126,11 +139,16 @@ const Jabatan = () => {
   );
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-6">
-      <div className="mb-4 border-b pb-4">
+    <motion.div
+      initial={{ opacity: 0, y: -40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-white shadow-lg rounded-lg p-6"
+    >
+      <motion.div variants={containerVariants} className="mb-4 border-b pb-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Manajemen Data Jabatan</h1>
         <p className="text-gray-600 text-sm mt-1">Kelola daftar jabatan di halaman ini.</p>
-      </div>
+      </motion.div>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div className="relative w-full md:w-80">
@@ -254,7 +272,7 @@ const Jabatan = () => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
