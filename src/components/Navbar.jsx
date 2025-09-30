@@ -3,33 +3,39 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, User, Settings, CalendarDays, Clock } from 'lucide-react';
 
-// Taruh gambar ikon di folder `public/gambar/`
 const logoIcon = '/gambar/icon2.png';
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState('');
+  // 1. Ubah state awal menjadi `null` untuk mendeteksi state "loading" awal
+  const [currentTime, setCurrentTime] = useState(null); 
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- TODO: Ganti data ini dengan data user dari context atau state management ---
   const user = {
-    name: 'Administrator',
-    role: 'Super Admin',
-    avatar: null, // atau '/path/to/avatar.jpg'
+    name: 'Tata Usaha',
+    role: 'Admin SMKN 1 Cimahi',
+    avatar: null,
   };
   const tahunAjaran = '2024/2025 Genap';
 
-  // --- Jam Digital Dinamis ---
   useEffect(() => {
-    const timer = setInterval(() => {
+    // 2. Buat fungsi untuk update jam
+    const updateClock = () => {
       const now = new Date();
-      setCurrentTime(now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
-    }, 1000);
+      // Menggunakan `replace` agar formatnya selalu "HH.MM" (lebih stabil untuk animasi)
+      setCurrentTime(now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':'));
+    };
+
+    // 3. Panggil fungsi sekali di awal untuk menghilangkan jeda 1 detik
+    updateClock(); 
+    
+    // 4. Jalankan interval untuk update selanjutnya
+    const timer = setInterval(updateClock, 1000); 
+    
     return () => clearInterval(timer);
   }, []);
 
-  // --- Hook untuk menutup dropdown saat klik di luar area menu ---
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -43,10 +49,9 @@ const Navbar = () => {
   const handleLogout = () => {
     setIsDropdownOpen(false);
     localStorage.removeItem("adminToken");
-    navigate("/login"); // Gunakan navigate untuk redirect
+    navigate("/login");
   };
 
-  // Fungsi untuk mendapatkan inisial dari nama
   const getInitials = (name) => {
     if (!name) return '?';
     const names = name.split(' ');
@@ -62,12 +67,36 @@ const Navbar = () => {
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
       <div className="flex justify-between items-center h-full px-8">
-        {/* Sisi Kiri - Info Dinamis */}
         <div className="flex items-center gap-6">
+            {/* --- BAGIAN JAM YANG DIPERBAIKI --- */}
             <div className='flex items-center gap-2 text-gray-600'>
                 <Clock size={20} />
-                <span className='font-medium text-sm'>{currentTime}</span>
+                <div className="font-medium text-sm w-12 h-5 flex items-center overflow-hidden">
+                    {currentTime ? (
+                        // Menggunakan AnimatePresence untuk animasi keluar-masuk saat digit berubah
+                        <AnimatePresence>
+                            {currentTime.split('').map((char, index) => (
+                                <motion.span
+                                    key={`${char}-${index}`} // Key unik agar Framer Motion mendeteksi perubahan
+                                    initial={{ y: '100%' }}
+                                    animate={{ y: '0%' }}
+                                    exit={{ y: '-100%' }}
+                                    transition={{ ease: 'backIn', duration: 0.3 }}
+                                    className={char === ':' ? 'motion-colon' : ''} // Class khusus untuk colon
+                                >
+                                    {/* Gunakan non-breaking space agar layout tidak rusak */}
+                                    {char === ' ' ? '\u00A0' : char}
+                                </motion.span>
+                            ))}
+                        </AnimatePresence>
+                    ) : (
+                        // Skeleton loader yang hanya tampil sesaat sebelum jam pertama muncul
+                        <span className="w-10 h-4 bg-gray-300 rounded animate-pulse"></span>
+                    )}
+                </div>
             </div>
+            {/* --- END BAGIAN JAM --- */}
+
              <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
                 <CalendarDays size={20} />
                 <span className='font-medium'>
@@ -76,7 +105,6 @@ const Navbar = () => {
             </div>
         </div>
 
-        {/* Sisi Kanan - User Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -95,7 +123,6 @@ const Navbar = () => {
             </div>
           </button>
 
-          {/* Menu Dropdown dengan Animasi */}
           <AnimatePresence>
             {isDropdownOpen && (
               <motion.div
@@ -106,29 +133,26 @@ const Navbar = () => {
                 transition={{ duration: 0.2, ease: "easeOut" }}
               >
                 <div className="py-2">
-                  <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm font-semibold text-gray-900">Signed in as</p>
-                    <p className="text-sm text-gray-700 truncate">{user.name}</p>
-                  </div>
-                  <div className="py-1">
-                    <Link to="/" className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-                      <User size={16} className="mr-3 text-gray-500" />
-                      Profil Saya
-                    </Link>
-                    <Link to="/" className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-                      <Settings size={16} className="mr-3 text-gray-500" />
-                      Pengaturan
-                    </Link>
-                  </div>
-                   <div className="border-t border-gray-200 py-1">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <LogOut size={16} className="mr-3" />
-                      Keluar
-                    </button>
-                  </div>
+                    <div className="px-4 py-3 border-b border-gray-200">
+                        <p className="text-sm font-semibold text-gray-900">Signed in as</p>
+                        <p className="text-sm text-gray-700 truncate">{user.name}</p>
+                    </div>
+                    <div className="py-1">
+                        <Link to="/" className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors pointer-events-none opacity-50">
+                            <User size={16} className="mr-3 text-gray-500" /> Profil Saya
+                        </Link>
+                        <Link to="/" className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors pointer-events-none opacity-50">
+                            <Settings size={16} className="mr-3 text-gray-500" /> Pengaturan
+                        </Link>
+                    </div>
+                    <div className="border-t border-gray-200 py-1">
+                        <button
+                            onClick={handleLogout}
+                            className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                            <LogOut size={16} className="mr-3" /> Keluar
+                        </button>
+                    </div>
                 </div>
               </motion.div>
             )}
