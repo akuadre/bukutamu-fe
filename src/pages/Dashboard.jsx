@@ -417,7 +417,7 @@ const Dashboard = () => {
         )}
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-10">
+      <div className="flex flex-col gap-8 mt-10">
         {loading ? (
           <MainContentSkeleton />
         ) : (
@@ -427,152 +427,7 @@ const Dashboard = () => {
             initial="hidden"
             animate="visible"
           >
-            <motion.div
-              variants={itemVariants}
-              className="bg-white shadow-lg rounded-xl p-6 lg:col-span-2"
-            >
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
-                <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                  <BarChart2 className="w-6 h-6 mr-2 text-blue-500" />
-                  {getChartTitle()}
-                </h2>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  >
-                    <option value="harian">Harian</option>{" "}
-                    <option value="mingguan">Mingguan</option>
-                    <option value="bulanan">Bulanan</option>{" "}
-                    <option value="tahunan">Tahunan</option>
-                  </select>
-                </div>
-              </div>
-              <div className="mb-4 p-3 bg-gray-50 rounded-lg flex flex-wrap items-center gap-4 text-sm">
-                {filterType === "harian" && (
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    max={getTodayString()}
-                    className="border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                )}
-                {filterType === "mingguan" && (
-                  <>
-                    <select
-                      value={selectedWeek.month}
-                      onChange={(e) =>
-                        setSelectedWeek((s) => ({
-                          ...s,
-                          month: parseInt(e.target.value),
-                        }))
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-1.5"
-                    >
-                      {Array.from({ length: 12 }).map((_, i) => (
-                        <option key={i} value={i}>
-                          {new Date(0, i).toLocaleString("id-ID", {
-                            month: "long",
-                          })}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={selectedWeek.year}
-                      onChange={(e) =>
-                        setSelectedWeek((s) => ({
-                          ...s,
-                          year: parseInt(e.target.value),
-                        }))
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-1.5"
-                    >
-                      {[2023, 2024, 2025].map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={selectedWeek.week}
-                      onChange={(e) =>
-                        setSelectedWeek((s) => ({
-                          ...s,
-                          week: parseInt(e.target.value),
-                        }))
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-1.5"
-                    >
-                      {[1, 2, 3, 4].map((w) => (
-                        <option key={w} value={w}>
-                          Minggu ke-{w}
-                        </option>
-                      ))}
-                    </select>
-                  </>
-                )}
-                {filterType === "bulanan" && (
-                  <>
-                    <select
-                      value={selectedMonth.month}
-                      onChange={(e) =>
-                        setSelectedMonth((s) => ({
-                          ...s,
-                          month: parseInt(e.target.value),
-                        }))
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-1.5"
-                    >
-                      {Array.from({ length: 12 }).map((_, i) => (
-                        <option key={i} value={i}>
-                          {new Date(0, i).toLocaleString("id-ID", {
-                            month: "long",
-                          })}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={selectedMonth.year}
-                      onChange={(e) =>
-                        setSelectedMonth((s) => ({
-                          ...s,
-                          year: parseInt(e.target.value),
-                        }))
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-1.5"
-                    >
-                      {[2023, 2024, 2025].map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                  </>
-                )}
-                {filterType === "tahunan" && (
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                    className="border border-gray-300 rounded-md px-3 py-1.5"
-                  >
-                    {[2023, 2024, 2025].map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-              <div className="h-80">
-                {loading || !chartData.labels ? (
-                  <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse"></div>
-                ) : (
-                  <Line data={chartData} options={chartOptions} />
-                )}
-              </div>
-            </motion.div>
+            {/* === TAMU TERBARU === */}
             <motion.div
               variants={itemVariants}
               className="bg-white shadow-lg rounded-xl p-6"
@@ -614,6 +469,30 @@ const Dashboard = () => {
                     ))}
                   </motion.tbody>
                 </table>
+              </div>
+            </motion.div>
+
+            {/* === CHART === */}
+            <motion.div
+              variants={itemVariants}
+              className="bg-white shadow-lg rounded-xl p-6"
+            >
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
+                <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                  <BarChart2 className="w-6 h-6 mr-2 text-blue-500" />
+                  {getChartTitle()}
+                </h2>
+                <div className="flex items-center gap-2">
+                  {/* filterType dropdown */}
+                </div>
+              </div>
+              {/* Filter inputs + chart */}
+              <div className="h-80">
+                {loading || !chartData.labels ? (
+                  <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse"></div>
+                ) : (
+                  <Line data={chartData} options={chartOptions} />
+                )}
               </div>
             </motion.div>
           </motion.div>
