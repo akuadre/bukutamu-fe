@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import Sidebar2 from "../components/Sidebar2";
+import Sidebar3 from "../components/Sidebar3";
 import Footer from "../components/Footer";
 
 const AppLayout = () => {
@@ -9,7 +10,8 @@ const AppLayout = () => {
     <div className="bg-slate-100 min-h-screen">
       {/* Sidebar kini full height dan fixed di kiri */}
       {/* <Sidebar /> */}
-      <Sidebar2 />
+      {/* <Sidebar2 /> */}
+      <Sidebar3 />
       
       {/* Navbar juga fixed, tapi dimulai setelah sidebar */}
       <Navbar />
