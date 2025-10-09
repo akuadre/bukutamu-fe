@@ -13,6 +13,8 @@ import About from "./pages/About.jsx";
 
 import { GuestRoute, ProtectedRoute } from "./routes/AuthRoutes.jsx";
 
+import GuestbookPage from "./pages/GuestbookPage.jsx";
+
 function App() {
   return (
     <Router>
@@ -35,6 +37,9 @@ function App() {
             <Route path="/about" element={<About />} />
           </Route>
         </Route>
+
+        {/* Rute input buku tamu */}
+        <Route path="/input" element={<GuestbookPage />} />
 
         {/* Jika user sudah login dan mengakses /login, redirect ke dashboard */}
         <Route 
