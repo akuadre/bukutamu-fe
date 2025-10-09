@@ -1,14 +1,13 @@
+// src/components/Navbar.jsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, User, Settings, CalendarDays, Clock } from 'lucide-react';
-
-const logoIcon = '/gambar/icon2.png';
+import { LogOut, User, Settings, CalendarDays, Clock, ChevronDown } from 'lucide-react';
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  // 1. Ubah state awal menjadi `null` untuk mendeteksi state "loading" awal
-  const [currentTime, setCurrentTime] = useState(null); 
+  const [currentTime, setCurrentTime] = useState('--:--'); 
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
@@ -20,19 +19,12 @@ const Navbar = () => {
   const tahunAjaran = '2024/2025 Genap';
 
   useEffect(() => {
-    // 2. Buat fungsi untuk update jam
     const updateClock = () => {
       const now = new Date();
-      // Menggunakan `replace` agar formatnya selalu "HH.MM" (lebih stabil untuk animasi)
       setCurrentTime(now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':'));
     };
-
-    // 3. Panggil fungsi sekali di awal untuk menghilangkan jeda 1 detik
-    updateClock(); 
-    
-    // 4. Jalankan interval untuk update selanjutnya
-    const timer = setInterval(updateClock, 1000); 
-    
+    updateClock();
+    const timer = setInterval(updateClock, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -55,104 +47,86 @@ const Navbar = () => {
   const getInitials = (name) => {
     if (!name) return '?';
     const names = name.split(' ');
-    if (names.length === 1) return names[0][0].toUpperCase();
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    return (names[0][0] + (names.length > 1 ? names[names.length - 1][0] : '')).toUpperCase();
   };
 
   return (
+    // [!] Efek Glassmorphism yang disempurnakan: lebih transparan, tanpa border, dengan shadow lembut
     <motion.header 
-      className="fixed top-0 left-72 right-0 h-20 bg-white/80 backdrop-blur-lg border-b border-gray-200/80 z-30"
+      className="fixed top-0 left-72 right-0 h-24 bg-white/70 backdrop-blur-xl z-30 shadow-sm shadow-black/5"
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
       <div className="flex justify-between items-center h-full px-8">
-        <div className="flex items-center gap-6">
-            {/* --- BAGIAN JAM YANG DIPERBAIKI --- */}
-            <div className='flex items-center gap-2 text-gray-600'>
-                <Clock size={20} />
-                <div className="font-medium text-sm w-12 h-5 flex items-center overflow-hidden">
-                    {currentTime ? (
-                        // Menggunakan AnimatePresence untuk animasi keluar-masuk saat digit berubah
-                        <AnimatePresence>
-                            {currentTime.split('').map((char, index) => (
-                                <motion.span
-                                    key={`${char}-${index}`} // Key unik agar Framer Motion mendeteksi perubahan
-                                    initial={{ y: '100%' }}
-                                    animate={{ y: '0%' }}
-                                    exit={{ y: '-100%' }}
-                                    transition={{ ease: 'backIn', duration: 0.3 }}
-                                    className={char === ':' ? 'motion-colon' : ''} // Class khusus untuk colon
-                                >
-                                    {/* Gunakan non-breaking space agar layout tidak rusak */}
-                                    {char === ' ' ? '\u00A0' : char}
-                                </motion.span>
-                            ))}
-                        </AnimatePresence>
-                    ) : (
-                        // Skeleton loader yang hanya tampil sesaat sebelum jam pertama muncul
-                        <span className="w-10 h-4 bg-gray-300 rounded animate-pulse"></span>
-                    )}
-                </div>
+        {/* [!] Info Cluster: Jam dan TA digabung dalam satu 'pill' stylish */}
+        <div className="flex items-center gap-4 bg-gray-100/80 border border-gray-200/80 rounded-full px-4 py-2">
+            <div className='flex items-center gap-2 text-gray-700'>
+                <Clock size={18} className="text-sky-600"/>
+                <span className="font-semibold text-sm font-mono tracking-wider">{currentTime}</span>
             </div>
-            {/* --- END BAGIAN JAM --- */}
-
-             <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
-                <CalendarDays size={20} />
+            <div className="h-4 w-px bg-gray-300"></div> {/* Separator */}
+            <div className="hidden md:flex items-center gap-2 text-sm text-gray-700">
+                <CalendarDays size={18} className="text-sky-600"/>
                 <span className='font-medium'>
-                    TA: <strong className="text-sky-600">{tahunAjaran}</strong>
+                    TA: <strong className="text-gray-900">{tahunAjaran}</strong>
                 </span>
             </div>
         </div>
 
+        {/* [!] Tombol Profil yang disempurnakan */}
         <div className="relative" ref={dropdownRef}>
-          <button
+          <motion.button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-200/60 transition-colors duration-200 focus:outline-none"
+            className="flex items-center gap-3 p-2 rounded-full hover:bg-gray-200/60 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+            whileTap={{ scale: 0.95 }}
           >
             <div className="text-right hidden sm:block">
               <p className="font-semibold text-sm text-gray-800">{user.name}</p>
               <p className="text-xs text-gray-500">{user.role}</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center text-white font-bold text-lg">
-              {user.avatar ? (
-                <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <span>{getInitials(user.name)}</span>
-              )}
+            {/* [!] Avatar dengan status ring */}
+            <div className="relative">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg ring-2 ring-offset-2 ring-offset-white ring-sky-300">
+                {user.avatar ? (
+                  <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  <span>{getInitials(user.name)}</span>
+                )}
+              </div>
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
-          </button>
+            <ChevronDown size={18} className={`text-gray-500 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          </motion.button>
 
           <AnimatePresence>
             {isDropdownOpen && (
               <motion.div
-                className="origin-top-right absolute right-0 mt-3 w-64 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                className="origin-top-right absolute right-0 mt-3 w-64 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
                 initial={{ opacity: 0, scale: 0.95, y: -10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
               >
-                <div className="py-2">
-                    <div className="px-4 py-3 border-b border-gray-200">
-                        <p className="text-sm font-semibold text-gray-900">Signed in as</p>
-                        <p className="text-sm text-gray-700 truncate">{user.name}</p>
-                    </div>
-                    <div className="py-1">
-                        <Link to="/" className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors pointer-events-none opacity-50">
-                            <User size={16} className="mr-3 text-gray-500" /> Profil Saya
-                        </Link>
-                        <Link to="/" className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors pointer-events-none opacity-50">
-                            <Settings size={16} className="mr-3 text-gray-500" /> Pengaturan
-                        </Link>
-                    </div>
-                    <div className="border-t border-gray-200 py-1">
-                        <button
-                            onClick={handleLogout}
-                            className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                            <LogOut size={16} className="mr-3" /> Keluar
-                        </button>
-                    </div>
+                <div className="p-2">
+                  <div className="px-3 py-3 border-b border-gray-200 mb-1">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
+                      <p className="text-xs text-gray-500">{user.role}</p>
+                  </div>
+                  <Link to="/" className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors pointer-events-none opacity-50">
+                      <User size={16} className="mr-3 text-gray-500" /> Profil Saya
+                  </Link>
+                  <Link to="/" className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors pointer-events-none opacity-50">
+                      <Settings size={16} className="mr-3 text-gray-500" /> Pengaturan
+                  </Link>
+                  <div className="border-t border-gray-200 mt-1 pt-1">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full text-left flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    >
+                        <LogOut size={16} className="mr-3" /> Keluar
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}
