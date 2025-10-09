@@ -1,8 +1,8 @@
-// src/components-guestbook/GuestbookHeader.jsx
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { LogIn } from 'lucide-react'; // Menggunakan ikon dari Lucide
-import Logo from '/gambar/icon2.png'; // Pastikan path logo benar
+// src/components/GuestbookHeader.jsx
+import React from "react";
+import { Link } from "react-router-dom";
+import { LogIn } from "lucide-react"; // Menggunakan ikon dari Lucide
+import Logo from "/gambar/icon2.png"; // Pastikan path logo benar
 
 const GuestbookHeader = () => {
   return (
@@ -14,8 +14,8 @@ const GuestbookHeader = () => {
             GuestBook
           </h1>
         </Link>
-        <Link 
-          to="/login" 
+        <Link
+          to="/login"
           className="flex items-center gap-2 bg-sky-500 text-white px-5 py-2 rounded-full font-semibold shadow-lg shadow-sky-500/30 hover:bg-sky-600 transition transform hover:scale-105"
         >
           <LogIn size={16} />
