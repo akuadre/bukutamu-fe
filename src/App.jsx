@@ -16,6 +16,8 @@ import Pegawai from "./pages/Pegawai.jsx";
 import BukuTamu from "./pages/BukuTamu.jsx";
 import About from "./pages/About.jsx";
 
+import LandingPage from "./pages/LandingPage.jsx";
+
 import { GuestRoute, ProtectedRoute } from "./routes/AuthRoutes.jsx";
 
 import GuestbookPage from "./pages/GuestbookPage.jsx";
@@ -24,7 +26,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<LandingPage />} />
 
         {/* Rute untuk halaman Login (Guest Only) */}
         <Route element={<GuestRoute />}>
