@@ -197,8 +197,10 @@ const LandingPage = () => {
                 <img src={logoSekolah} alt="Guestbook Icon" className="w-36 h-36 drop-shadow-2xl" />
                 <div className="space-y-4"><h2 className="text-5xl font-bold leading-tight">Selamat Datang di SMKN 1 Cimahi</h2><p className="text-xl text-blue-200">Silakan mengisi buku tamu digital kami.</p></div>
                 <div className="flex items-center justify-center gap-3 p-2 rounded-full">
-                  <RouterLink to="/guestbook#parent" className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium px-8 py-4 text-lg rounded-full shadow-lg hover:scale-105 transition">Orang Tua</RouterLink>
-                  <RouterLink to="/guestbook#general" className="bg-gradient-to-r from-green-500 to-green-600 text-white font-medium px-8 py-4 text-lg rounded-full shadow-lg hover:scale-105 transition">Tamu Umum</RouterLink>
+                  {/* [!] Perubahan: Link disesuaikan dengan route '/input' di App.jsx */}
+                  <RouterLink to="/input#parent" className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium px-8 py-4 text-lg rounded-full shadow-lg hover:scale-105 transition">Orang Tua</RouterLink>
+                  {/* [!] Perubahan: Link disesuaikan dengan route '/input' di App.jsx */}
+                  <RouterLink to="/input#general" className="bg-gradient-to-r from-green-500 to-green-600 text-white font-medium px-8 py-4 text-lg rounded-full shadow-lg hover:scale-105 transition">Tamu Umum</RouterLink>
                 </div>
               </motion.div>
               <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.7 }} className="w-full lg:w-1/2 flex items-center justify-center lg:pl-12 mt-12 lg:mt-0">
