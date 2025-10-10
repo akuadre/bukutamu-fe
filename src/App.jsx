@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import AppLayout from "./layouts/AppLayout.jsx";
 
@@ -19,6 +24,8 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/login" element={<Login />} />
+
         {/* Rute untuk halaman Login (Guest Only) */}
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<Login />} />
@@ -28,7 +35,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             {/* Ganti '/dashboard' menjadi '/' untuk halaman utama */}
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/siswa" element={<Siswa />} />
             <Route path="/orangtua" element={<OrangTua />} />
             <Route path="/jabatan" element={<Jabatan />} />
@@ -42,17 +49,17 @@ function App() {
         <Route path="/input" element={<GuestbookPage />} />
 
         {/* Jika user sudah login dan mengakses /login, redirect ke dashboard */}
-        <Route 
-          path="/login" 
+        <Route
+          path="/login"
           element={
             <ProtectedRoute>
-              <Navigate to="/" replace />
+              <Navigate to="/dashboard" replace />
             </ProtectedRoute>
-          } 
+          }
         />
 
         {/* Jika rute tidak ditemukan, arahkan ke halaman utama */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
   );

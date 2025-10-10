@@ -1,27 +1,38 @@
 // src/components/Navbar.jsx
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, User, Settings, CalendarDays, Clock, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  LogOut,
+  User,
+  Settings,
+  CalendarDays,
+  Clock,
+  ChevronDown,
+} from "lucide-react";
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState('--:--'); 
+  const [currentTime, setCurrentTime] = useState("--:--");
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
   const user = {
-    name: 'Tata Usaha',
-    role: 'Admin SMKN 1 Cimahi',
+    name: "Tata Usaha",
+    role: "Admin SMKN 1 Cimahi",
     avatar: null,
   };
-  const tahunAjaran = '2024/2025 Genap';
+  const tahunAjaran = "2024/2025 Genap";
 
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      setCurrentTime(now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':'));
+      setCurrentTime(
+        now
+          .toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+          .replace(".", ":")
+      );
     };
     updateClock();
     const timer = setInterval(updateClock, 1000);
@@ -34,8 +45,8 @@ const Navbar = () => {
         setIsDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = () => {
@@ -45,14 +56,16 @@ const Navbar = () => {
   };
 
   const getInitials = (name) => {
-    if (!name) return '?';
-    const names = name.split(' ');
-    return (names[0][0] + (names.length > 1 ? names[names.length - 1][0] : '')).toUpperCase();
+    if (!name) return "?";
+    const names = name.split(" ");
+    return (
+      names[0][0] + (names.length > 1 ? names[names.length - 1][0] : "")
+    ).toUpperCase();
   };
 
   return (
     // [!] Efek Glassmorphism yang disempurnakan: lebih transparan, tanpa border, dengan shadow lembut
-    <motion.header 
+    <motion.header
       className="fixed top-0 left-72 right-0 h-24 bg-white/70 backdrop-blur-xl z-30 shadow-sm shadow-black/5"
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -61,17 +74,19 @@ const Navbar = () => {
       <div className="flex justify-between items-center h-full px-8">
         {/* [!] Info Cluster: Jam dan TA digabung dalam satu 'pill' stylish */}
         <div className="flex items-center gap-4 bg-gray-100/80 border border-gray-200/80 rounded-full px-4 py-2">
-            <div className='flex items-center gap-2 text-gray-700'>
-                <Clock size={18} className="text-sky-600"/>
-                <span className="font-semibold text-sm font-mono tracking-wider">{currentTime}</span>
-            </div>
-            <div className="h-4 w-px bg-gray-300"></div> {/* Separator */}
-            <div className="hidden md:flex items-center gap-2 text-sm text-gray-700">
-                <CalendarDays size={18} className="text-sky-600"/>
-                <span className='font-medium'>
-                    TA: <strong className="text-gray-900">{tahunAjaran}</strong>
-                </span>
-            </div>
+          <div className="flex items-center gap-2 text-gray-700">
+            <Clock size={18} className="text-sky-600" />
+            <span className="font-semibold text-sm font-mono tracking-wider">
+              {currentTime}
+            </span>
+          </div>
+          <div className="h-4 w-px bg-gray-300"></div> {/* Separator */}
+          <div className="hidden md:flex items-center gap-2 text-sm text-gray-700">
+            <CalendarDays size={18} className="text-sky-600" />
+            <span className="font-medium">
+              TA: <strong className="text-gray-900">{tahunAjaran}</strong>
+            </span>
+          </div>
         </div>
 
         {/* [!] Tombol Profil yang disempurnakan */}
@@ -89,14 +104,23 @@ const Navbar = () => {
             <div className="relative">
               <div className="w-11 h-11 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg ring-2 ring-offset-2 ring-offset-white ring-sky-300">
                 {user.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 ) : (
                   <span>{getInitials(user.name)}</span>
                 )}
               </div>
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
-            <ChevronDown size={18} className={`text-gray-500 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              size={18}
+              className={`text-gray-500 transition-transform duration-300 ${
+                isDropdownOpen ? "rotate-180" : ""
+              }`}
+            />
           </motion.button>
 
           <AnimatePresence>
@@ -110,21 +134,31 @@ const Navbar = () => {
               >
                 <div className="p-2">
                   <div className="px-3 py-3 border-b border-gray-200 mb-1">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-                      <p className="text-xs text-gray-500">{user.role}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-gray-500">{user.role}</p>
                   </div>
-                  <Link to="/" className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors pointer-events-none opacity-50">
-                      <User size={16} className="mr-3 text-gray-500" /> Profil Saya
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors pointer-events-none opacity-50"
+                  >
+                    <User size={16} className="mr-3 text-gray-500" /> Profil
+                    Saya
                   </Link>
-                  <Link to="/" className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors pointer-events-none opacity-50">
-                      <Settings size={16} className="mr-3 text-gray-500" /> Pengaturan
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors pointer-events-none opacity-50"
+                  >
+                    <Settings size={16} className="mr-3 text-gray-500" />{" "}
+                    Pengaturan
                   </Link>
                   <div className="border-t border-gray-200 mt-1 pt-1">
                     <button
-                        onClick={handleLogout}
-                        className="w-full text-left flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      onClick={handleLogout}
+                      className="w-full text-left flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
                     >
-                        <LogOut size={16} className="mr-3" /> Keluar
+                      <LogOut size={16} className="mr-3" /> Keluar
                     </button>
                   </div>
                 </div>
