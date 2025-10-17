@@ -108,7 +108,7 @@ const Sidebar = () => {
             label: "Siswa",
             sub: [
               { path: "/siswa", label: "Data Siswa", icon: User },
-              { path: "/orangtua", label: "Data Orang Tua", icon: Users },
+              // { path: "/orangtua", label: "Data Orang Tua", icon: Users },
             ],
           },
           {
