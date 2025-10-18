@@ -36,11 +36,10 @@ function App() {
         {/* Rute yang dilindungi, butuh login */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            {/* Ganti '/dashboard' menjadi '/' untuk halaman utama */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/siswa" element={<Siswa />} />
-            <Route path="/orangtua" element={<OrangTua />} />
-            <Route path="/jabatan" element={<Jabatan />} />
+            {/* <Route path="/orangtua" element={<OrangTua />} /> */}
+            {/* <Route path="/jabatan" element={<Jabatan />} /> */}
             <Route path="/pegawai" element={<Pegawai />} />
             <Route path="/bukutamu" element={<BukuTamu />} />
             <Route path="/about" element={<About />} />
