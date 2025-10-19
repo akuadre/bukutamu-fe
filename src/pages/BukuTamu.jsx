@@ -1,16 +1,146 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom"; // 1. Import Link
-import { Search, PlusCircle, Camera, Eye } from "lucide-react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { 
+  Search, PlusCircle, Camera, Eye, Trash2, X, User, 
+  Phone, MapPin, Calendar, Briefcase, GraduationCap, 
+  FileText, CheckCircle, AlertTriangle, XCircle 
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Impor komponen reusable
-import Modal from "../components/Modal";
+const API_URL = 'http://localhost:8000/api';
+const IMG_URL = 'http://localhost:8000/uploads/foto_tamu/';
 
-import axios from "axios";
-const API_URL = "http://localhost:8000/api/bukutamu";
-const IMG_URL = "http://localhost:8000/uploads/foto_tamu/";
+// =================================================================
+// KOMPONEN HELPER
+// =================================================================
 
-// --- TAMBAHAN BARU: Komponen Ikon WhatsApp ---
+const Modal = ({ isOpen, onClose, title, children }) => (
+  <AnimatePresence>
+    {isOpen && (
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 50 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between p-5 border-b border-gray-200 sticky top-0 bg-white rounded-t-2xl z-10">
+            <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+            <button onClick={onClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors">
+              <X size={24} />
+            </button>
+          </div>
+          <div className="flex-1 p-6 overflow-y-auto">{children}</div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+const Notification = ({ notification, onDismiss }) => {
+  const icons = { 
+    success: <CheckCircle className="w-6 h-6" />, 
+    error: <XCircle className="w-6 h-6" />, 
+    warning: <AlertTriangle className="w-6 h-6" />, 
+    info: <FileText className="w-6 h-6" /> 
+  };
+  const colors = { 
+    success: 'bg-green-500', 
+    error: 'bg-red-500', 
+    warning: 'bg-yellow-500', 
+    info: 'bg-sky-500' 
+  };
+  
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => { onDismiss(); }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification, onDismiss]);
+  
+  return (
+    <AnimatePresence>
+      {notification && (
+        <motion.div 
+          initial={{ opacity: 0, y: -50, scale: 0.8 }} 
+          animate={{ opacity: 1, y: 0, scale: 1 }} 
+          exit={{ opacity: 0, y: 20, scale: 0.9 }} 
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }} 
+          className="fixed top-5 left-1/2 -translate-x-1/2 z-50"
+        >
+          <div className={`flex items-center gap-4 text-white p-4 rounded-xl shadow-2xl ${colors[notification.type]}`}>
+            {icons[notification.type]}
+            <span className="font-medium">{notification.text}</span>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const LoadingTable = ({ rowsPerPage }) => (
+  <div className="overflow-x-auto">
+    <table className="min-w-full w-full table-auto animate-pulse">
+      <thead className="bg-gray-800 text-white text-center">
+        <tr>
+          <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">No</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Nama Tamu</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Role</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Nama Siswa</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Bertemu Dengan</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Keperluan</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Foto</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tanggal</th>
+          <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {[...Array(rowsPerPage)].map((_, index) => (
+          <tr key={index} className="border-b border-gray-200">
+            <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '30px'}}></div></td>
+            <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-3/4"></div></td>
+            <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '60px'}}></div></td>
+            <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-2/3"></div></td>
+            <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-1/2"></div></td>
+            <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-5/6"></div></td>
+            <td className="py-4 px-3 text-center"><div className="w-16 h-16 bg-gray-200 rounded-md mx-auto"></div></td>
+            <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '120px'}}></div></td>
+            <td className="py-4 px-3 text-center"><div className="h-8 bg-gray-200 rounded mx-auto" style={{width: '100px'}}></div></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
+const DetailRow = ({ label, value, icon }) => (
+  <div className="flex flex-col py-3 border-b border-gray-100 last:border-b-0">
+    <dt className="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
+      {icon}
+      {label}
+    </dt>
+    <dd className="text-sm text-gray-900 ml-6">
+      {value || <span className="text-gray-400">-</span>}
+    </dd>
+  </div>
+);
+
+const DetailSection = ({ title, icon, children }) => (
+  <div className="mb-6">
+    <h4 className="text-base font-bold text-gray-700 mb-2 flex items-center">
+      {icon} 
+      <span className="ml-2">{title}</span>
+    </h4>
+    <dl className="bg-gray-50 p-4 rounded-lg">{children}</dl>
+  </div>
+);
+
+// Komponen Ikon WhatsApp
 const IconWhatsApp = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -20,134 +150,25 @@ const IconWhatsApp = (props) => (
     viewBox="0 0 16 16"
     {...props}
   >
-    <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232" />
+    <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.6 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.6 0 0 1 4.66 1.931 6.56 6.6 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
   </svg>
 );
 
-// Komponen kecil untuk menampilkan item detail di dalam modal
-const DetailItem = ({ label, value, fullWidth = false }) => (
-  <div className={fullWidth ? "md:col-span-2" : ""}>
-    <p className="text-sm text-gray-500">{label}</p>
-    <p className="font-semibold text-gray-800 break-words">{value || "-"}</p>
-  </div>
-);
+// =================================================================
+// MODAL DETAIL BUKU TAMU
+// =================================================================
 
-const LoadingTable = ({ rowCount }) => (
-  <div className="overflow-x-auto">
-    <table className="min-w-full w-full table-auto animate-pulse">
-      <thead className="bg-gray-800 text-white text-center">
-        <tr>
-          <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            No
-          </th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Nama Tamu
-          </th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Role
-          </th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Nama Siswa
-          </th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Bertemu Dengan
-          </th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Keperluan
-          </th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Foto
-          </th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Tanggal Kunjungan
-          </th>
-          <th className="px-3 py-3 w-24 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Aksi
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {[...Array(rowCount)].map((_, index) => (
-          <tr key={index} className="border-b border-gray-200">
-            <td className="px-3 py-3">
-              <div className="h-4 bg-gray-200 rounded"></div>
-            </td>
-            <td className="px-3 py-3">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </td>
-            <td className="px-3 py-3">
-              <div className="h-4 bg-gray-200 rounded"></div>
-            </td>
-            <td className="px-3 py-3">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </td>
-            <td className="px-3 py-3">
-              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-            </td>
-            <td className="px-3 py-3">
-              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-            </td>
-            <td className="px-3 py-3">
-              <div className="w-16 h-16 bg-gray-200 rounded-md mx-auto"></div>
-            </td>
-            <td className="px-3 py-3">
-              <div className="h-4 bg-gray-200 rounded w-full"></div>
-            </td>
-            <td className="px-3 py-3">
-              <div className="h-4 bg-gray-200 rounded"></div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
+const BukuTamuDetailModal = ({ tamu, onClose, loading }) => {
+  if (!tamu && !loading) return null;
 
-const BukuTamu = () => {
-  const [bukuTamu, setBukuTamu] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filterText, setFilterText] = useState("");
-  const [modalState, setModalState] = useState({ type: null, data: null });
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  const fetchBukuTamu = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(API_URL); // sesuaikan URL API kamu
-      const data = response.data.data;
-
-      // tambahkan nomor urut otomatis
-      const dataWithNo = data.map((item, index) => ({
-        ...item,
-        no: page * rowsPerPage + index + 1,
-      }));
-
-      setBukuTamu(dataWithNo);
-    } catch (error) {
-      console.error("Gagal mengambil data buku tamu:", error);
-    } finally {
-      setLoading(false);
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return "";
+    let cleaned = phone.replace(/\D/g, "");
+    if (cleaned.startsWith("0")) {
+      cleaned = "62" + cleaned.substring(1);
     }
+    return cleaned;
   };
-
-  useEffect(() => {
-    fetchBukuTamu();
-  }, []);
-
-  const filteredItems = useMemo(() => {
-    return bukuTamu.filter((item) =>
-      JSON.stringify(item).toLowerCase().includes(filterText.toLowerCase())
-    );
-  }, [bukuTamu, filterText]);
-
-  const paginatedItems = filteredItems.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
-  const totalPages = Math.ceil(filteredItems.length / rowsPerPage);
-
-  const closeModal = () => setModalState({ type: null, data: null });
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -162,45 +183,259 @@ const BukuTamu = () => {
     return new Date(dateString).toLocaleDateString("id-ID", options);
   };
 
-  // --- TAMBAHAN BARU: Fungsi untuk format nomor HP ke format wa.me ---
-  const formatPhoneNumber = (phone) => {
-    if (!phone) return "";
-    let cleaned = phone.replace(/\D/g, "");
-    if (cleaned.startsWith("0")) {
-      cleaned = "62" + cleaned.substring(1);
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Detail Kunjungan Tamu">
+      {loading ? (
+        <div className="p-8 text-center flex items-center justify-center flex-grow">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <div className="space-y-6 max-h-[85vh] overflow-y-auto">
+          {/* FOTO DAN IDENTITAS UTAMA */}
+          <div className="text-center bg-gray-50 p-6 rounded-xl">
+            {tamu.foto_tamu ? (
+              <img 
+                src={`${IMG_URL}${tamu.foto_tamu}`}
+                alt={`Foto ${tamu.nama}`} 
+                className="w-32 h-32 object-cover rounded-full mx-auto shadow-md border-4 border-white"
+              />
+            ) : (
+              <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center mx-auto">
+                <Camera size={48} className="text-gray-400" />
+              </div>
+            )}
+            <h3 className="text-2xl font-bold mt-4 text-gray-900">{tamu.nama}</h3>
+            <p className="text-gray-500 capitalize">
+              {tamu.role === "ortu" 
+                ? `Orang Tua dari ${tamu.siswa?.namasiswa || '-'}` 
+                : tamu.instansi || 'Tamu Umum'}
+            </p>
+          </div>
+
+          {/* INFORMASI TAMU */}
+          <DetailSection title="Informasi Tamu" icon={<User size={18} className="text-blue-500"/>}>
+            <DetailRow label="Nama Lengkap" value={tamu.nama} icon={<User size={16} className="text-gray-400"/>} />
+            <DetailRow label="Role" value={tamu.role === "ortu" ? "Orang Tua" : "Tamu Umum"} icon={<Briefcase size={16} className="text-gray-400"/>} />
+            <DetailRow label="Instansi" value={tamu.instansi} icon={<GraduationCap size={16} className="text-gray-400"/>} />
+            <DetailRow label="Kontak" value={tamu.kontak} icon={<Phone size={16} className="text-gray-400"/>} />
+            {tamu.kontak && (
+              <div className="mt-2">
+                <a
+                  href={`https://wa.me/${formatPhoneNumber(tamu.kontak)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all duration-300 text-sm"
+                >
+                  <IconWhatsApp />
+                  Chat WhatsApp
+                </a>
+              </div>
+            )}
+          </DetailSection>
+
+          {/* ALAMAT */}
+          <DetailSection title="Alamat" icon={<MapPin size={18} className="text-yellow-500"/>}>
+            <DetailRow label="Alamat Lengkap" value={tamu.alamat} icon={<MapPin size={16} className="text-gray-400"/>} />
+          </DetailSection>
+
+          {/* INFORMASI KUNJUNGAN */}
+          <DetailSection title="Informasi Kunjungan" icon={<Calendar size={18} className="text-green-500"/>}>
+            <DetailRow 
+              label="Bertemu Dengan" 
+              value={`${tamu.pegawai?.nama_pegawai || '-'} (${tamu.jabatan?.nama_jabatan || '-'})`} 
+              icon={<User size={16} className="text-gray-400"/>} 
+            />
+            <DetailRow label="Keperluan" value={tamu.keperluan} icon={<FileText size={16} className="text-gray-400"/>} />
+            <DetailRow label="Nama Siswa" value={tamu.siswa?.namasiswa} icon={<GraduationCap size={16} className="text-gray-400"/>} />
+            <DetailRow label="Tanggal Kunjungan" value={formatDate(tamu.created_at)} icon={<Calendar size={16} className="text-gray-400"/>} />
+          </DetailSection>
+        </div>
+      )}
+    </Modal>
+  );
+};
+
+// =================================================================
+// MODAL KONFIRMASI HAPUS
+// =================================================================
+
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, data }) => (
+  <Modal isOpen={isOpen} onClose={onClose} title="Konfirmasi Hapus">
+    <div className="text-center">
+      <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        Hapus Data Buku Tamu?
+      </h3>
+      <p className="text-gray-600 mb-6">
+        Apakah Anda yakin ingin menghapus data kunjungan <strong>{data?.nama}</strong>? 
+        Tindakan ini tidak dapat dibatalkan.
+      </p>
+      <div className="flex justify-center gap-3">
+        <button
+          onClick={onClose}
+          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+        >
+          Batal
+        </button>
+        <button
+          onClick={onConfirm}
+          className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2"
+        >
+          <Trash2 size={16} />
+          Hapus
+        </button>
+      </div>
+    </div>
+  </Modal>
+);
+
+// =================================================================
+// KOMPONEN UTAMA BUKU TAMU
+// =================================================================
+
+const BukuTamu = () => {
+  const [bukuTamu, setBukuTamu] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState(null);
+  
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedTerm, setDebouncedTerm] = useState('');
+
+  const [selectedTamu, setSelectedTamu] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [tamuToDelete, setTamuToDelete] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  const showNotif = (type, text) => setNotification({ type, text });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const fetchData = useCallback(async (page, search, perPage) => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}/bukutamu`, {
+        params: { page, search, rows_per_page: perPage }
+      });
+      setBukuTamu(response.data.data || []);
+      setPagination({
+        current_page: response.data.current_page,
+        last_page: response.data.last_page,
+        total: response.data.total,
+        from: response.data.from,
+        to: response.data.to,
+      });
+    } catch (err) {
+      showNotif("error", "Gagal mengambil data buku tamu dari server.");
+      setBukuTamu([]);
+    } finally {
+      setLoading(false);
     }
-    return cleaned;
+  }, []);
+
+  useEffect(() => {
+    fetchData(currentPage, debouncedTerm, rowsPerPage);
+  }, [currentPage, debouncedTerm, rowsPerPage, fetchData]);
+
+  const handleViewDetail = async (id) => {
+    setIsDetailModalOpen(true);
+    setLoadingDetail(true);
+    try {
+      const response = await axios.get(`${API_URL}/bukutamu/${id}`);
+      if (response.data.success) {
+        setSelectedTamu(response.data.data);
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (err) {
+      showNotif('error', 'Gagal mengambil detail buku tamu.');
+      setIsDetailModalOpen(false);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/bukutamu/${id}`);
+      showNotif('success', 'Data buku tamu berhasil dihapus.');
+      fetchData(currentPage, debouncedTerm, rowsPerPage);
+    } catch (err) {
+      showNotif('error', 'Gagal menghapus data buku tamu.');
+    } finally {
+      setIsDeleteModalOpen(false);
+      setTamuToDelete(null);
+    }
+  };
+
+  const confirmDelete = (tamu) => {
+    setTamuToDelete(tamu);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDetailModal = () => { 
+    setIsDetailModalOpen(false); 
+    setSelectedTamu(null); 
+  };
+
+  const closeDeleteModal = () => { 
+    setIsDeleteModalOpen(false); 
+    setTamuToDelete(null); 
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const options = {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    };
+    return new Date(dateString).toLocaleDateString("id-ID", options);
+  };
+
+  const getRowNumber = (index) => {
+    if (!pagination) return index + 1;
+    return pagination.from + index;
   };
 
   return (
     <>
-      <motion.div
-        className="bg-white shadow-xl rounded-2xl p-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+      <Notification notification={notification} onDismiss={() => setNotification(null)} />
+      
+      <motion.div 
+        className="bg-white shadow-xl rounded-2xl p-6" 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.45 }}
       >
         <div className="mb-6 border-b pb-4">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Manajemen Buku Tamu
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Kelola dan lihat daftar kunjungan tamu di halaman ini.
-          </p>
+          <h1 className="text-3xl font-bold text-gray-800">Manajemen Buku Tamu</h1>
+          <p className="text-gray-500 mt-1">Kelola dan lihat daftar kunjungan tamu di halaman ini.</p>
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
-              type="text"
-              placeholder="Cari tamu..."
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
+              type="text" 
+              placeholder="Cari nama tamu, keperluan, atau kontak..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-2 focus:ring-sky-500 outline-none transition"
             />
           </div>
-          {/* 3. Tombol diubah menjadi Link */}
+          
           <Link
             to="/input"
             className="bg-sky-600 text-white px-5 py-2.5 rounded-lg hover:bg-sky-700 transition-all duration-300 flex items-center justify-center shadow-lg shadow-sky-200 hover:shadow-xl w-full md:w-auto"
@@ -210,51 +445,35 @@ const BukuTamu = () => {
           </Link>
         </div>
 
-        {loading ? (
-          <LoadingTable rowCount={rowsPerPage} />
+        {loading ? ( 
+          <LoadingTable rowsPerPage={rowsPerPage} /> 
         ) : (
           <div className="overflow-x-auto text-sm">
             <table className="min-w-full w-full table-auto border-collapse">
               <thead className="bg-gray-800 text-white text-center">
-                {/* 5. Kolom tabel dikembalikan seperti semula */}
                 <tr>
-                  <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    No
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
-                    Nama Tamu
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
-                    Nama Siswa
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
-                    Bertemu Dengan
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
-                    Keperluan
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Foto
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Tanggal
-                  </th>
-                  <th className="px-3 py-3 w-24 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Aksi
-                  </th>
+                  <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">No</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Nama Tamu</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Role</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Nama Siswa</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Bertemu Dengan</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Keperluan</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Foto</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tanggal</th>
+                  <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedItems.map((tamu, index) => (
+                {bukuTamu.map((tamu, index) => (
                   <tr key={tamu.id} className="hover:bg-gray-50 text-gray-700">
-                    <td className="px-3 py-3 whitespace-nowrap text-center">
-                      {page * rowsPerPage + index + 1}
-                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-center">{getRowNumber(index)}</td>
                     <td className="px-3 py-3 whitespace-nowrap font-medium text-gray-900">
-                      {tamu.nama}
+                      <button 
+                        onClick={() => handleViewDetail(tamu.id)} 
+                        className="text-blue-600 hover:text-blue-800 hover:underline text-left"
+                      >
+                        {tamu.nama}
+                      </button>
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-center">
                       {tamu.role === "ortu" ? "Orang Tua" : "Tamu Umum"}
@@ -263,8 +482,7 @@ const BukuTamu = () => {
                       {tamu.siswa?.namasiswa || "-"}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-left">
-                      {tamu.pegawai?.nama_pegawai} ({tamu.jabatan?.nama_jabatan}
-                      )
+                      {tamu.pegawai?.nama_pegawai} ({tamu.jabatan?.nama_jabatan})
                     </td>
                     <td className="px-3 py-3 whitespace-normal max-w-xs">
                       {tamu.keperluan}
@@ -272,7 +490,6 @@ const BukuTamu = () => {
                     <td className="px-3 py-3 whitespace-nowrap text-center">
                       {tamu.foto_tamu ? (
                         <img
-                          //   src={`https://placehold.co/80x80/E0E7FF/4338CA?text=Foto`}
                           src={`${IMG_URL}${tamu.foto_tamu}`}
                           alt="Foto Tamu"
                           className="w-16 h-16 object-cover rounded-md shadow-sm mx-auto"
@@ -287,136 +504,94 @@ const BukuTamu = () => {
                       {formatDate(tamu.created_at)}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-center">
-                      {/* 4. Tombol aksi menjadi Detail */}
-                      <button
-                        onClick={() =>
-                          setModalState({ type: "detail", data: tamu })
-                        }
-                        className="bg-sky-100 text-sky-800 font-semibold p-2 rounded-lg hover:bg-sky-200 transition flex items-center gap-2"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>Show Detail</span>
-                      </button>
+                      <div className="flex justify-center gap-2">
+                        <button 
+                          onClick={() => handleViewDetail(tamu.id)} 
+                          className="bg-sky-100 text-sky-800 font-semibold p-2 rounded-lg hover:bg-sky-200 transition flex items-center gap-1"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => confirmDelete(tamu)} 
+                          className="bg-red-100 text-red-800 font-semibold p-2 rounded-lg hover:bg-red-200 transition flex items-center gap-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
+                {!loading && bukuTamu.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="text-center py-6 text-gray-500">
+                      {debouncedTerm ? "Tidak ada data yang cocok dengan pencarian." : "Tidak ada data buku tamu."}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         )}
 
-        <div className="flex justify-between items-center p-2 text-sm text-gray-600 border-t mt-4">
-          <div className="flex items-center gap-2">
-            <span>Baris per halaman:</span>
-            <select
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(Number(e.target.value));
-                setPage(0);
-              }}
-              className="px-2 py-1 bg-transparent focus:outline-none border rounded-md"
-            >
-              <option value={5}>5</option> <option value={10}>10</option>{" "}
-              <option value={25}>25</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(p - 1, 0))}
-              disabled={page === 0}
-              className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-            >
-              Sebelumnya
-            </button>
-            <span>
-              Hal {page + 1} dari {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
-              disabled={page >= totalPages - 1}
-              className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-            >
-              Berikutnya
-            </button>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* --- MODAL DETAIL DATA --- */}
-      <Modal
-        isOpen={modalState.type === "detail"}
-        onClose={closeModal}
-        title={`Detail Kunjungan: ${modalState.data?.nama}`}
-      >
-        {modalState.data && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b">
-              {modalState.data.foto_tamu ? (
-                <img
-                //   src={`https://placehold.co/100x100/E0E7FF/4338CA?text=Foto`}
-                  src={`${IMG_URL}${modalState.data.foto_tamu}`}
-                  alt="Foto Tamu"
-                  className="w-24 h-24 object-cover rounded-full shadow-md"
-                />
-              ) : (
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Camera size={40} className="text-gray-400" />
-                </div>
-              )}
-              <div className="text-center sm:text-left">
-                <h3 className="text-2xl font-bold text-gray-900">
-                  {modalState.data.nama}
-                </h3>
-                <p className="text-gray-500 capitalize">
-                  {modalState.data.role === "ortu"
-                    ? `Orang Tua dari ${modalState.data.siswa?.namasiswa}`
-                    : modalState.data.instansi}
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-              <div className="flex flex-col gap-2">
-                <DetailItem label="Kontak" value={modalState.data.kontak} />
-                <a
-                  href={`https://wa.me/${formatPhoneNumber(
-                    modalState.data.kontak
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-green-500 text-white px-3 py-3 rounded-md hover:bg-green-600 transition-all duration-300 mt-2 text-xs shadow-md"
-                >
-                  <IconWhatsApp />
-                  Chat WhatsApp
-                </a>
-              </div>
-
-              {/* <DetailItem label="Kontak" value={modalState.data.kontak} /> */}
-              <DetailItem label="Alamat" value={modalState.data.alamat} />
-              <DetailItem
-                label="Bertemu Dengan"
-                value={`${modalState.data.pegawai?.nama_pegawai} (${modalState.data.jabatan?.nama_jabatan})`}
-              />
-              <DetailItem
-                label="Tanggal Kunjungan"
-                value={formatDate(modalState.data.created_at)}
-              />
-              <DetailItem
-                label="Keperluan"
-                value={modalState.data.keperluan}
-                fullWidth={true}
-              />
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={closeModal}
-                className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+        {pagination && pagination.total > 0 && (
+          <div className="flex justify-between items-center p-2 text-sm text-gray-600 border-t mt-4">
+            <div className="flex items-center gap-2">
+              <span>Baris per halaman:</span>
+              <select
+                value={rowsPerPage} 
+                onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                className="px-2 py-1 bg-transparent focus:outline-none border rounded-md"
               >
-                Tutup
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+            <span>Menampilkan <strong>{pagination.from}-{pagination.to}</strong> dari <strong>{pagination.total}</strong></span>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setCurrentPage(p => p - 1)} 
+                disabled={currentPage === 1} 
+                className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                Sebelumnya
+              </button>
+              <span>Hal {pagination.current_page} dari {pagination.last_page}</span>
+              <button 
+                onClick={() => setCurrentPage(p => p + 1)} 
+                disabled={currentPage === pagination.last_page} 
+                className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                Berikutnya
               </button>
             </div>
           </div>
         )}
-      </Modal>
+      </motion.div>
+
+      {/* MODAL DETAIL */}
+      <AnimatePresence>
+        {isDetailModalOpen && (
+          <BukuTamuDetailModal 
+            tamu={selectedTamu} 
+            onClose={closeDetailModal} 
+            loading={loadingDetail} 
+          />
+        )}
+      </AnimatePresence>
+
+      {/* MODAL KONFIRMASI HAPUS */}
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <DeleteConfirmationModal
+            isOpen={isDeleteModalOpen}
+            onClose={closeDeleteModal}
+            onConfirm={() => handleDelete(tamuToDelete.id)}
+            data={tamuToDelete}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };
