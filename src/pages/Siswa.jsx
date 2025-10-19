@@ -22,7 +22,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 50 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
+            className="relative bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 border-b border-gray-200 sticky top-0 bg-white rounded-t-2xl z-10">
@@ -97,10 +97,12 @@ const LoadingTable = ({ rowsPerPage }) => (
 );
 
 const DetailRow = ({ label, value }) => (
-    <div className="flex flex-col sm:flex-row justify-between py-2.5 border-b border-gray-100 last:border-b-0">
-        <dt className="text-sm font-medium text-gray-500 w-full sm:w-2/5">{label}</dt>
-        <dd className="text-sm text-gray-900 text-left sm:text-right w-full sm:w-3/5">{value || '-'}</dd>
-    </div>
+  <div className="flex flex-col py-3 border-b border-gray-100 last:border-b-0">
+    <dt className="text-sm font-semibold text-gray-700 mb-1">{label}</dt>
+    <dd className="text-sm text-gray-900">
+      {value || <span className="text-gray-400">-</span>}
+    </dd>
+  </div>
 );
 
 const DetailSection = ({ title, icon, children }) => (
@@ -110,88 +112,164 @@ const DetailSection = ({ title, icon, children }) => (
     </div>
 );
 
-// MODAL DETAIL YANG SUPER LENGKAP
+// MODAL DETAIL YANG SUPER LENGKAP SEPERTI INDUK
 const SiswaDetailModal = ({ siswa, onClose, loading }) => {
-    if (!siswa && !loading) return null;
+  if (!siswa && !loading) return null;
 
-    return (
-        <Modal isOpen={true} onClose={onClose} title="Detail Lengkap Siswa">
-            {loading ? (
-                <div className="p-8 text-center flex items-center justify-center flex-grow"><div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>
-            ) : (
-                <div className="space-y-6">
-                    <div className="text-center">
-                        <img 
-                            src={`${PHOTO_BASE_URL}/PhotoSiswa/${siswa.idthnmasuk}/${siswa.photosiswa}`}
-                            alt={`Foto ${siswa.namasiswa}`} className="w-32 h-40 object-cover rounded-lg mx-auto shadow-md border-4 border-white"
-                            onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/128x160/e2e8f0/64748b?text=No+Image'; }}
-                        />
-                        <h3 className="text-2xl font-bold mt-4 text-gray-900">{siswa.namasiswa}</h3>
-                        <p className="text-gray-500">NIS: {siswa.nis}</p>
-                    </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-2">
-                        <DetailSection title="Identitas" icon={<User size={18} className="text-blue-500"/>}>
-                            <DetailRow label="ID Siswa" value={siswa.idsiswa} />
-                            <DetailRow label="NISN" value={siswa.nisn} />
-                            <DetailRow label="NIK" value={siswa.nik} />
-                            <DetailRow label="Tempat, Tgl Lahir" value={`${siswa.tmplahir}, ${new Date(siswa.tgllahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`} />
-                            <DetailRow label="Jenis Kelamin" value={siswa.jk === 'L' ? 'Laki-laki' : 'Perempuan'} />
-                            <DetailRow label="Agama" value={siswa.agama?.agama} />
-                        </DetailSection>
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Detail Lengkap Siswa">
+      {loading ? (
+        <div className="p-8 text-center flex items-center justify-center flex-grow">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <div className="space-y-6 max-h-[85vh] overflow-y-auto">
+          
+          {/* FOTO DAN IDENTITAS UTAMA */}
+          <div className="text-center bg-gray-50 p-6 rounded-xl">
+            <img 
+              src={`${PHOTO_BASE_URL}/PhotoSiswa/${siswa.idthnmasuk}/${siswa.photosiswa}`}
+              alt={`Foto ${siswa.namasiswa}`} 
+              className="w-32 h-40 object-cover rounded-lg mx-auto shadow-md border-4 border-white"
+              onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/128x160/e2e8f0/64748b?text=No+Image'; }}
+            />
+            <h3 className="text-2xl font-bold mt-4 text-gray-900">{siswa.namasiswa}</h3>
+            <p className="text-gray-500">NIS: {siswa.nis} | NISN: {siswa.nisn}</p>
+          </div>
 
-                        <DetailSection title="Informasi Akademik" icon={<School size={18} className="text-green-500"/>}>
-                            <DetailRow label="Tahun Masuk" value={siswa.thnajaran?.thnajaran || siswa.idthnmasuk} />
-                            <DetailRow label="Asal Sekolah" value={siswa.asalsekolah} />
-                            <DetailRow label="Nomor Ijazah" value={siswa.nomorijazah} />
-                            <DetailRow label="Nomor UN" value={siswa.nomorun} />
-                        </DetailSection>
-                        
-                        <DetailSection title="Riwayat Kelas" icon={<BookUser size={18} className="text-purple-500"/>}>
-                            {siswa.riwayat_kelas_formatted && siswa.riwayat_kelas_formatted.length > 0 ? (
-                                siswa.riwayat_kelas_formatted.map((rk, index) => (
-                                    <DetailRow key={index} label={rk.tahun_ajaran} value={`${rk.nama_kelas} (Wali: ${rk.wali_kelas})`} />
-                                ))
-                            ) : <p className="text-sm text-gray-500 p-2">Tidak ada riwayat kelas.</p>}
-                        </DetailSection>
+          {/* IDENTITAS SISWA */}
+          <DetailSection title="📌 Identitas" icon={<User size={18} className="text-blue-500"/>}>
+            <DetailRow label="ID Siswa" value={siswa.idsiswa} />
+            <DetailRow label="NIS" value={siswa.nis} />
+            <DetailRow label="NISN" value={siswa.nisn} />
+            <DetailRow label="NIK" value={siswa.nik} />
+            <DetailRow label="Tempat Lahir" value={siswa.tmplahir} />
+            <DetailRow label="Tanggal Lahir" value={new Date(siswa.tgllahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })} />
+            <DetailRow label="Jenis Kelamin" value={siswa.jk === 'L' ? 'Laki-laki' : 'Perempuan'} />
+            <DetailRow label="Agama" value={siswa.agama?.agama} />
+            <DetailRow label="Tahun Masuk" value={siswa.thnajaran?.thnajaran || siswa.idthnmasuk} />
+            <DetailRow label="Asal Sekolah" value={siswa.asalsekolah} />
+          </DetailSection>
 
-                        <DetailSection title="Alamat & Kontak" icon={<Home size={18} className="text-yellow-500"/>}>
-                            <DetailRow label="Alamat" value={`${siswa.jalan || ''} RT ${siswa.rt}/${siswa.rw}, ${siswa.desa}, ${siswa.kecamatan}`} />
-                            <DetailRow label="Kabupaten/Kota" value={`${siswa.kabupaten}, ${siswa.kodepos}`} />
-                            <DetailRow label="No. HP" value={siswa.hpsiswa} />
-                            <DetailRow label="Email" value={siswa.email} />
-                        </DetailSection>
+          {/* RIWAYAT KELAS */}
+          <DetailSection title="📚 Riwayat Kelas" icon={<BookUser size={18} className="text-purple-500"/>}>
+            {siswa.riwayat_kelas_formatted && siswa.riwayat_kelas_formatted.length > 0 ? (
+              siswa.riwayat_kelas_formatted.map((rk, index) => (
+                <DetailRow key={index} label={rk.tahun_ajaran} value={`${rk.nama_kelas} (Wali: ${rk.wali_kelas})`} />
+              ))
+            ) : <p className="text-sm text-gray-500 p-2">Tidak ada riwayat kelas.</p>}
+          </DetailSection>
 
-                        {siswa.ortu && 
-                        <DetailSection title="Orang Tua / Wali" icon={<Briefcase size={18} className="text-red-500"/>}>
-                            <DetailRow label="Nama Ayah" value={siswa.ortu.nama_ayah} />
-                            <DetailRow label="Pekerjaan Ayah" value={siswa.ortu.pekerjaan_ayah} />
-                            <DetailRow label="Nama Ibu" value={siswa.ortu.nama_ibu} />
-                            <DetailRow label="Pekerjaan Ibu" value={siswa.ortu.pekerjaan_ibu} />
-                            {siswa.ortu.nama_wali && <DetailRow label="Nama Wali" value={siswa.ortu.nama_wali} />}
-                        </DetailSection>}
+          {/* ALAMAT LENGKAP */}
+          <DetailSection title="🏠 Alamat" icon={<Home size={18} className="text-yellow-500"/>}>
+            <DetailRow label="Jalan" value={siswa.jalan} />
+            <DetailRow label="RT/RW" value={`${siswa.rt || '-'}/${siswa.rw || '-'}`} />
+            <DetailRow label="Dusun" value={siswa.dusun} />
+            <DetailRow label="Desa/Kelurahan" value={siswa.desa} />
+            <DetailRow label="Kecamatan" value={siswa.kecamatan} />
+            <DetailRow label="Kabupaten/Kota" value={siswa.kabupaten} />
+            <DetailRow label="Kode Pos" value={siswa.kodepos} />
+          </DetailSection>
 
-                        <DetailSection title="Bantuan & Kesejahteraan" icon={<HeartHandshake size={18} className="text-teal-500"/>}>
-                            <DetailRow label="Penerima KIP" value={siswa.penerimakip} />
-                            <DetailRow label="Nomor KIP" value={siswa.nomorkip} />
-                            <DetailRow label="Layak PIP" value={siswa.layakpip} />
-                            <DetailRow label="Alasan Layak PIP" value={siswa.alasanlayakpip} />
-                        </DetailSection>
+          {/* KONTAK */}
+          <DetailSection title="📞 Kontak" icon={<FileText size={18} className="text-green-500"/>}>
+            <DetailRow label="Telepon Rumah" value={siswa.tlprumah} />
+            <DetailRow label="No. HP Siswa" value={siswa.hpsiswa} />
+            <DetailRow label="Email" value={siswa.email} />
+          </DetailSection>
 
-                        <DetailSection title="Kesehatan" icon={<ShieldCheck size={18} className="text-cyan-500"/>}>
-                            <DetailRow label="Anak Berkebutuhan Khusus" value={siswa.abk} />
-                            <DetailRow label="Tinggi / Berat Badan" value={`${siswa.tinggibadan} cm / ${siswa.beratbadan} kg`} />
-                        </DetailSection>
+          {/* TEMPAT TINGGAL & TRANSPORTASI */}
+          <DetailSection title="🚗 Tempat Tinggal & Transportasi" icon={<Briefcase size={18} className="text-orange-500"/>}>
+            <DetailRow label="Jenis Tinggal" value={siswa.jenistinggal} />
+            <DetailRow label="Kepemilikan Rumah" value={siswa.kepemilikan} />
+            <DetailRow label="Transportasi" value={siswa.transportasi} />
+            <DetailRow label="Jarak ke Sekolah" value={siswa.jarak} />
+            <DetailRow label="Lintang" value={siswa.lintang} />
+            <DetailRow label="Bujur" value={siswa.bujur} />
+          </DetailSection>
 
-                        <DetailSection title="Informasi Bank" icon={<Banknote size={18} className="text-lime-500"/>}>
-                            <DetailRow label="Bank" value={siswa.bank} />
-                            <DetailRow label="No. Rekening" value={siswa.nomorrekening} />
-                            <DetailRow label="Atas Nama" value={siswa.atasnamarekening} />
-                        </DetailSection>
-                    </div>
-                </div>
-            )}
-        </Modal>
-    );
+          {/* KELUARGA */}
+          <DetailSection title="👨‍👩‍👧‍👦 Keluarga" icon={<HeartHandshake size={18} className="text-pink-500"/>}>
+            <DetailRow label="No. KK" value={siswa.nomorkk} />
+            <DetailRow label="No. Akta Lahir" value={siswa.nomoraktalahir} />
+            <DetailRow label="Anak ke" value={siswa.anakke} />
+            <DetailRow label="Jumlah Saudara" value={siswa.jumlahsaudara} />
+          </DetailSection>
+
+          {/* DOKUMEN AKADEMIK */}
+          <DetailSection title="📄 Dokumen Akademik" icon={<FileText size={18} className="text-indigo-500"/>}>
+            <DetailRow label="Nomor UN" value={siswa.nomorun} />
+            <DetailRow label="Nomor Ijazah" value={siswa.nomorijazah} />
+          </DetailSection>
+
+          {/* BANTUAN */}
+          <DetailSection title="💳 Bantuan" icon={<Banknote size={18} className="text-teal-500"/>}>
+            <DetailRow label="Penerima KPS" value={siswa.penerimakps} />
+            <DetailRow label="Nomor KPS" value={siswa.nomorkps} />
+            <DetailRow label="Penerima KIP" value={siswa.penerimakip} />
+            <DetailRow label="Nomor KIP" value={siswa.nomorkip} />
+            <DetailRow label="Nama KIP" value={siswa.namakip} />
+            <DetailRow label="Penerima KKS" value={siswa.penerimakks} />
+            <DetailRow label="Layak PIP" value={siswa.layakpip} />
+            <DetailRow label="Alasan Layak PIP" value={siswa.alasanlayakpip} />
+          </DetailSection>
+
+          {/* BANK */}
+          <DetailSection title="🏦 Bank" icon={<Banknote size={18} className="text-lime-500"/>}>
+            <DetailRow label="Bank" value={siswa.bank} />
+            <DetailRow label="No. Rekening" value={siswa.nomorrekening} />
+            <DetailRow label="Atas Nama" value={siswa.atasnamarekening} />
+          </DetailSection>
+
+          {/* KESEHATAN */}
+          <DetailSection title="⚕️ Kesehatan" icon={<ShieldCheck size={18} className="text-red-500"/>}>
+            <DetailRow label="Anak Berkebutuhan Khusus" value={siswa.abk} />
+            <DetailRow label="Berat Badan" value={`${siswa.beratbadan} Kg`} />
+            <DetailRow label="Tinggi Badan" value={`${siswa.tinggibadan} cm`} />
+            <DetailRow label="Lingkar Kepala" value={`${siswa.lingkarkepala} cm`} />
+          </DetailSection>
+
+          {/* ORANG TUA / WALI - AYAH */}
+          <>
+            <DetailSection title="👨 Data Ayah" icon={<User size={18} className="text-blue-700"/>}>
+              <DetailRow label="Nama Ayah" value={siswa.ortu?.nama_ayah || '-'} />
+              <DetailRow label="Tanggal Lahir Ayah" value={siswa.ortu?.tgllahir_ayah || '-'} />
+              <DetailRow label="Pendidikan Ayah" value={siswa.ortu?.pendidikan_ayah || '-'} />
+              <DetailRow label="Pekerjaan Ayah" value={siswa.ortu?.pekerjaan_ayah || '-'} />
+              <DetailRow label="Penghasilan Ayah" value={siswa.ortu?.penghasilan_ayah || '-'} />
+              <DetailRow label="NIK Ayah" value={siswa.ortu?.nik_ayah || '-'} />
+              <DetailRow label="HP Ayah" value={siswa.ortu?.hp_ayah || '-'} />
+              <DetailRow label="Alamat Ayah" value={siswa.ortu?.alamat_ayah || '-'} />
+            </DetailSection>
+
+            {/* ORANG TUA / WALI - IBU */}
+            <DetailSection title="👩 Data Ibu" icon={<User size={18} className="text-pink-600"/>}>
+              <DetailRow label="Nama Ibu" value={siswa.ortu?.nama_ibu || '-'} />
+              <DetailRow label="Tanggal Lahir Ibu" value={siswa.ortu?.tgllahir_ibu || '-'} />
+              <DetailRow label="Pendidikan Ibu" value={siswa.ortu?.pendidikan_ibu || '-'} />
+              <DetailRow label="Pekerjaan Ibu" value={siswa.ortu?.pekerjaan_ibu || '-'} />
+              <DetailRow label="Penghasilan Ibu" value={siswa.ortu?.penghasilan_ibu || '-'} />
+              <DetailRow label="NIK Ibu" value={siswa.ortu?.nik_ibu || '-'} />
+              <DetailRow label="HP Ibu" value={siswa.ortu?.hp_ibu || '-'} />
+              <DetailRow label="Alamat Ibu" value={siswa.ortu?.alamat_ibu || '-'} />
+            </DetailSection>
+
+            {/* ORANG TUA / WALI - WALI */}
+            <DetailSection title="👤 Data Wali" icon={<User size={18} className="text-gray-600"/>}>
+              <DetailRow label="Nama Wali" value={siswa.ortu?.nama_wali || '-'} />
+              <DetailRow label="Tanggal Lahir Wali" value={siswa.ortu?.tgllahir_wali || '-'} />
+              <DetailRow label="Pendidikan Wali" value={siswa.ortu?.pendidikan_wali || '-'} />
+              <DetailRow label="Pekerjaan Wali" value={siswa.ortu?.pekerjaan_wali || '-'} />
+              <DetailRow label="Penghasilan Wali" value={siswa.ortu?.penghasilan_wali || '-'} />
+              <DetailRow label="NIK Wali" value={siswa.ortu?.nik_wali || '-'} />
+              <DetailRow label="HP Wali" value={siswa.ortu?.hp_wali || '-'} />
+              <DetailRow label="Alamat Wali" value={siswa.ortu?.alamat_wali || '-'} />
+            </DetailSection>
+          </>
+        </div>
+      )}
+    </Modal>
+  );
 };
 
 // =================================================================
