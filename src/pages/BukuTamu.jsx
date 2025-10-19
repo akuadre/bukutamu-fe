@@ -1,15 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { 
-  Search, PlusCircle, Camera, Eye, Trash2, X, User, 
-  Phone, MapPin, Calendar, Briefcase, GraduationCap, 
-  FileText, CheckCircle, AlertTriangle, XCircle 
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import {
+  Search,
+  PlusCircle,
+  Camera,
+  Eye,
+  Trash2,
+  X,
+  User,
+  Phone,
+  MapPin,
+  Calendar,
+  Briefcase,
+  GraduationCap,
+  FileText,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const API_URL = 'http://localhost:8000/api';
-const IMG_URL = 'http://localhost:8000/uploads/foto_tamu/';
+const API_URL = "http://localhost:8000/api";
+const IMG_URL = "http://localhost:8000/uploads/foto_tamu/";
 
 // =================================================================
 // KOMPONEN HELPER
@@ -19,19 +32,26 @@ const Modal = ({ isOpen, onClose, title, children }) => (
   <AnimatePresence>
     {isOpen && (
       <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 50 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          initial={{ scale: 0.9, opacity: 0, y: 50 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 50 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between p-5 border-b border-gray-200 sticky top-0 bg-white rounded-t-2xl z-10">
             <h3 className="text-xl font-bold text-gray-800">{title}</h3>
-            <button onClick={onClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors">
+            <button
+              onClick={onClose}
+              className="p-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+            >
               <X size={24} />
             </button>
           </div>
@@ -43,37 +63,43 @@ const Modal = ({ isOpen, onClose, title, children }) => (
 );
 
 const Notification = ({ notification, onDismiss }) => {
-  const icons = { 
-    success: <CheckCircle className="w-6 h-6" />, 
-    error: <XCircle className="w-6 h-6" />, 
-    warning: <AlertTriangle className="w-6 h-6" />, 
-    info: <FileText className="w-6 h-6" /> 
+  const icons = {
+    success: <CheckCircle className="w-6 h-6" />,
+    error: <XCircle className="w-6 h-6" />,
+    warning: <AlertTriangle className="w-6 h-6" />,
+    info: <FileText className="w-6 h-6" />,
   };
-  const colors = { 
-    success: 'bg-green-500', 
-    error: 'bg-red-500', 
-    warning: 'bg-yellow-500', 
-    info: 'bg-sky-500' 
+  const colors = {
+    success: "bg-green-500",
+    error: "bg-red-500",
+    warning: "bg-yellow-500",
+    info: "bg-sky-500",
   };
-  
+
   useEffect(() => {
     if (notification) {
-      const timer = setTimeout(() => { onDismiss(); }, 3000);
+      const timer = setTimeout(() => {
+        onDismiss();
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [notification, onDismiss]);
-  
+
   return (
     <AnimatePresence>
       {notification && (
-        <motion.div 
-          initial={{ opacity: 0, y: -50, scale: 0.8 }} 
-          animate={{ opacity: 1, y: 0, scale: 1 }} 
-          exit={{ opacity: 0, y: 20, scale: 0.9 }} 
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }} 
+        <motion.div
+          initial={{ opacity: 0, y: -50, scale: 0.8 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
           className="fixed top-5 left-1/2 -translate-x-1/2 z-50"
         >
-          <div className={`flex items-center gap-4 text-white p-4 rounded-xl shadow-2xl ${colors[notification.type]}`}>
+          <div
+            className={`flex items-center gap-4 text-white p-4 rounded-xl shadow-2xl ${
+              colors[notification.type]
+            }`}
+          >
             {icons[notification.type]}
             <span className="font-medium">{notification.text}</span>
           </div>
@@ -88,29 +114,77 @@ const LoadingTable = ({ rowsPerPage }) => (
     <table className="min-w-full w-full table-auto animate-pulse">
       <thead className="bg-gray-800 text-white text-center">
         <tr>
-          <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">No</th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Nama Tamu</th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Role</th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Nama Siswa</th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Bertemu Dengan</th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Keperluan</th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Foto</th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tanggal</th>
-          <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
+          <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+            No
+          </th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+            Nama Tamu
+          </th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+            Role
+          </th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+            Nama Siswa
+          </th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+            Bertemu Dengan
+          </th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+            Keperluan
+          </th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+            Foto
+          </th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+            Tanggal
+          </th>
+          <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+            Aksi
+          </th>
         </tr>
       </thead>
       <tbody>
         {[...Array(rowsPerPage)].map((_, index) => (
           <tr key={index} className="border-b border-gray-200">
-            <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '30px'}}></div></td>
-            <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-3/4"></div></td>
-            <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '60px'}}></div></td>
-            <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-2/3"></div></td>
-            <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-1/2"></div></td>
-            <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-5/6"></div></td>
-            <td className="py-4 px-3 text-center"><div className="w-16 h-16 bg-gray-200 rounded-md mx-auto"></div></td>
-            <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '120px'}}></div></td>
-            <td className="py-4 px-3 text-center"><div className="h-8 bg-gray-200 rounded mx-auto" style={{width: '100px'}}></div></td>
+            <td className="py-4 px-3 text-center">
+              <div
+                className="h-4 bg-gray-200 rounded mx-auto"
+                style={{ width: "30px" }}
+              ></div>
+            </td>
+            <td className="py-4 px-3">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </td>
+            <td className="py-4 px-3 text-center">
+              <div
+                className="h-4 bg-gray-200 rounded mx-auto"
+                style={{ width: "60px" }}
+              ></div>
+            </td>
+            <td className="py-4 px-3">
+              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+            </td>
+            <td className="py-4 px-3">
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </td>
+            <td className="py-4 px-3">
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </td>
+            <td className="py-4 px-3 text-center">
+              <div className="w-16 h-16 bg-gray-200 rounded-md mx-auto"></div>
+            </td>
+            <td className="py-4 px-3 text-center">
+              <div
+                className="h-4 bg-gray-200 rounded mx-auto"
+                style={{ width: "120px" }}
+              ></div>
+            </td>
+            <td className="py-4 px-3 text-center">
+              <div
+                className="h-8 bg-gray-200 rounded mx-auto"
+                style={{ width: "100px" }}
+              ></div>
+            </td>
           </tr>
         ))}
       </tbody>
@@ -133,7 +207,7 @@ const DetailRow = ({ label, value, icon }) => (
 const DetailSection = ({ title, icon, children }) => (
   <div className="mb-6">
     <h4 className="text-base font-bold text-gray-700 mb-2 flex items-center">
-      {icon} 
+      {icon}
       <span className="ml-2">{title}</span>
     </h4>
     <dl className="bg-gray-50 p-4 rounded-lg">{children}</dl>
@@ -150,7 +224,7 @@ const IconWhatsApp = (props) => (
     viewBox="0 0 16 16"
     {...props}
   >
-    <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.6 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.6 0 0 1 4.66 1.931 6.56 6.6 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+    <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.6 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.6 0 0 1 4.66 1.931 6.56 6.6 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232" />
   </svg>
 );
 
@@ -194,9 +268,9 @@ const BukuTamuDetailModal = ({ tamu, onClose, loading }) => {
           {/* FOTO DAN IDENTITAS UTAMA */}
           <div className="text-center bg-gray-50 p-6 rounded-xl">
             {tamu.foto_tamu ? (
-              <img 
+              <img
                 src={`${IMG_URL}${tamu.foto_tamu}`}
-                alt={`Foto ${tamu.nama}`} 
+                alt={`Foto ${tamu.nama}`}
                 className="w-32 h-32 object-cover rounded-full mx-auto shadow-md border-4 border-white"
               />
             ) : (
@@ -204,20 +278,41 @@ const BukuTamuDetailModal = ({ tamu, onClose, loading }) => {
                 <Camera size={48} className="text-gray-400" />
               </div>
             )}
-            <h3 className="text-2xl font-bold mt-4 text-gray-900">{tamu.nama}</h3>
+            <h3 className="text-2xl font-bold mt-4 text-gray-900">
+              {tamu.nama}
+            </h3>
             <p className="text-gray-500 capitalize">
-              {tamu.role === "ortu" 
-                ? `Orang Tua dari ${tamu.siswa?.namasiswa || '-'}` 
-                : tamu.instansi || 'Tamu Umum'}
+              {tamu.role === "ortu"
+                ? `Orang Tua dari ${tamu.siswa?.namasiswa || "-"}`
+                : tamu.instansi || "Tamu Umum"}
             </p>
           </div>
 
           {/* INFORMASI TAMU */}
-          <DetailSection title="Informasi Tamu" icon={<User size={18} className="text-blue-500"/>}>
-            <DetailRow label="Nama Lengkap" value={tamu.nama} icon={<User size={16} className="text-gray-400"/>} />
-            <DetailRow label="Role" value={tamu.role === "ortu" ? "Orang Tua" : "Tamu Umum"} icon={<Briefcase size={16} className="text-gray-400"/>} />
-            <DetailRow label="Instansi" value={tamu.instansi} icon={<GraduationCap size={16} className="text-gray-400"/>} />
-            <DetailRow label="Kontak" value={tamu.kontak} icon={<Phone size={16} className="text-gray-400"/>} />
+          <DetailSection
+            title="Informasi Tamu"
+            icon={<User size={18} className="text-blue-500" />}
+          >
+            <DetailRow
+              label="Nama Lengkap"
+              value={tamu.nama}
+              icon={<User size={16} className="text-gray-400" />}
+            />
+            <DetailRow
+              label="Role"
+              value={tamu.role === "ortu" ? "Orang Tua" : "Tamu Umum"}
+              icon={<Briefcase size={16} className="text-gray-400" />}
+            />
+            <DetailRow
+              label="Instansi"
+              value={tamu.instansi}
+              icon={<GraduationCap size={16} className="text-gray-400" />}
+            />
+            <DetailRow
+              label="Kontak"
+              value={tamu.kontak}
+              icon={<Phone size={16} className="text-gray-400" />}
+            />
             {tamu.kontak && (
               <div className="mt-2">
                 <a
@@ -234,20 +329,44 @@ const BukuTamuDetailModal = ({ tamu, onClose, loading }) => {
           </DetailSection>
 
           {/* ALAMAT */}
-          <DetailSection title="Alamat" icon={<MapPin size={18} className="text-yellow-500"/>}>
-            <DetailRow label="Alamat Lengkap" value={tamu.alamat} icon={<MapPin size={16} className="text-gray-400"/>} />
+          <DetailSection
+            title="Alamat"
+            icon={<MapPin size={18} className="text-yellow-500" />}
+          >
+            <DetailRow
+              label="Alamat Lengkap"
+              value={tamu.alamat}
+              icon={<MapPin size={16} className="text-gray-400" />}
+            />
           </DetailSection>
 
           {/* INFORMASI KUNJUNGAN */}
-          <DetailSection title="Informasi Kunjungan" icon={<Calendar size={18} className="text-green-500"/>}>
-            <DetailRow 
-              label="Bertemu Dengan" 
-              value={`${tamu.pegawai?.nama_pegawai || '-'} (${tamu.jabatan?.nama_jabatan || '-'})`} 
-              icon={<User size={16} className="text-gray-400"/>} 
+          <DetailSection
+            title="Informasi Kunjungan"
+            icon={<Calendar size={18} className="text-green-500" />}
+          >
+            <DetailRow
+              label="Bertemu Dengan"
+              value={`${tamu.pegawai?.namapegawai || "-"} (${
+                tamu.jabatan?.jabatan || "-"
+              })`}
+              icon={<User size={16} className="text-gray-400" />}
             />
-            <DetailRow label="Keperluan" value={tamu.keperluan} icon={<FileText size={16} className="text-gray-400"/>} />
-            <DetailRow label="Nama Siswa" value={tamu.siswa?.namasiswa} icon={<GraduationCap size={16} className="text-gray-400"/>} />
-            <DetailRow label="Tanggal Kunjungan" value={formatDate(tamu.created_at)} icon={<Calendar size={16} className="text-gray-400"/>} />
+            <DetailRow
+              label="Keperluan"
+              value={tamu.keperluan}
+              icon={<FileText size={16} className="text-gray-400" />}
+            />
+            <DetailRow
+              label="Nama Siswa"
+              value={tamu.siswa?.namasiswa}
+              icon={<GraduationCap size={16} className="text-gray-400" />}
+            />
+            <DetailRow
+              label="Tanggal Kunjungan"
+              value={formatDate(tamu.created_at)}
+              icon={<Calendar size={16} className="text-gray-400" />}
+            />
           </DetailSection>
         </div>
       )}
@@ -267,8 +386,8 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, data }) => (
         Hapus Data Buku Tamu?
       </h3>
       <p className="text-gray-600 mb-6">
-        Apakah Anda yakin ingin menghapus data kunjungan <strong>{data?.nama}</strong>? 
-        Tindakan ini tidak dapat dibatalkan.
+        Apakah Anda yakin ingin menghapus data kunjungan{" "}
+        <strong>{data?.nama}</strong>? Tindakan ini tidak dapat dibatalkan.
       </p>
       <div className="flex justify-center gap-3">
         <button
@@ -297,12 +416,12 @@ const BukuTamu = () => {
   const [bukuTamu, setBukuTamu] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
-  
+
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedTerm, setDebouncedTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedTerm, setDebouncedTerm] = useState("");
 
   const [selectedTamu, setSelectedTamu] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -320,11 +439,17 @@ const BukuTamu = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  useEffect(() => {
+    if (selectedTamu) {
+      console.log("DATA DETAIL TAMU:", selectedTamu);
+    }
+  }, [selectedTamu]);
+
   const fetchData = useCallback(async (page, search, perPage) => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_URL}/bukutamu`, {
-        params: { page, search, rows_per_page: perPage }
+        params: { page, search, rows_per_page: perPage },
       });
       setBukuTamu(response.data.data || []);
       setPagination({
@@ -357,7 +482,7 @@ const BukuTamu = () => {
         throw new Error(response.data.message);
       }
     } catch (err) {
-      showNotif('error', 'Gagal mengambil detail buku tamu.');
+      showNotif("error", "Gagal mengambil detail buku tamu.");
       setIsDetailModalOpen(false);
     } finally {
       setLoadingDetail(false);
@@ -367,10 +492,10 @@ const BukuTamu = () => {
   const handleDelete = async (id) => {
     try {
       await axios.delete(`${API_URL}/bukutamu/${id}`);
-      showNotif('success', 'Data buku tamu berhasil dihapus.');
+      showNotif("success", "Data buku tamu berhasil dihapus.");
       fetchData(currentPage, debouncedTerm, rowsPerPage);
     } catch (err) {
-      showNotif('error', 'Gagal menghapus data buku tamu.');
+      showNotif("error", "Gagal menghapus data buku tamu.");
     } finally {
       setIsDeleteModalOpen(false);
       setTamuToDelete(null);
@@ -382,14 +507,14 @@ const BukuTamu = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const closeDetailModal = () => { 
-    setIsDetailModalOpen(false); 
-    setSelectedTamu(null); 
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedTamu(null);
   };
 
-  const closeDeleteModal = () => { 
-    setIsDeleteModalOpen(false); 
-    setTamuToDelete(null); 
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setTamuToDelete(null);
   };
 
   const formatDate = (dateString) => {
@@ -411,31 +536,38 @@ const BukuTamu = () => {
 
   return (
     <>
-      <Notification notification={notification} onDismiss={() => setNotification(null)} />
-      
-      <motion.div 
-        className="bg-white shadow-xl rounded-2xl p-6" 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
+      <Notification
+        notification={notification}
+        onDismiss={() => setNotification(null)}
+      />
+
+      <motion.div
+        className="bg-white shadow-xl rounded-2xl p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
       >
         <div className="mb-6 border-b pb-4">
-          <h1 className="text-3xl font-bold text-gray-800">Manajemen Buku Tamu</h1>
-          <p className="text-gray-500 mt-1">Kelola dan lihat daftar kunjungan tamu di halaman ini.</p>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Manajemen Buku Tamu
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Kelola dan lihat daftar kunjungan tamu di halaman ini.
+          </p>
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
-              type="text" 
-              placeholder="Cari nama tamu, keperluan, atau kontak..." 
-              value={searchTerm} 
+              type="text"
+              placeholder="Cari nama tamu, keperluan, atau kontak..."
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-2 focus:ring-sky-500 outline-none transition"
             />
           </div>
-          
+
           <Link
             to="/input"
             className="bg-sky-600 text-white px-5 py-2.5 rounded-lg hover:bg-sky-700 transition-all duration-300 flex items-center justify-center shadow-lg shadow-sky-200 hover:shadow-xl w-full md:w-auto"
@@ -445,31 +577,51 @@ const BukuTamu = () => {
           </Link>
         </div>
 
-        {loading ? ( 
-          <LoadingTable rowsPerPage={rowsPerPage} /> 
+        {loading ? (
+          <LoadingTable rowsPerPage={rowsPerPage} />
         ) : (
           <div className="overflow-x-auto text-sm">
             <table className="min-w-full w-full table-auto border-collapse">
               <thead className="bg-gray-800 text-white text-center">
                 <tr>
-                  <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">No</th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Nama Tamu</th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Role</th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Nama Siswa</th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Bertemu Dengan</th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Keperluan</th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Foto</th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tanggal</th>
-                  <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
+                  <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+                    No
+                  </th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
+                    Nama Tamu
+                  </th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
+                    Nama Siswa
+                  </th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
+                    Bertemu Dengan
+                  </th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
+                    Keperluan
+                  </th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+                    Foto
+                  </th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+                    Tanggal
+                  </th>
+                  <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {bukuTamu.map((tamu, index) => (
                   <tr key={tamu.id} className="hover:bg-gray-50 text-gray-700">
-                    <td className="px-3 py-3 whitespace-nowrap text-center">{getRowNumber(index)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-center">
+                      {getRowNumber(index)}
+                    </td>
                     <td className="px-3 py-3 whitespace-nowrap font-medium text-gray-900">
-                      <button 
-                        onClick={() => handleViewDetail(tamu.id)} 
+                      <button
+                        onClick={() => handleViewDetail(tamu.id)}
                         className="text-blue-600 hover:text-blue-800 hover:underline text-left"
                       >
                         {tamu.nama}
@@ -482,7 +634,8 @@ const BukuTamu = () => {
                       {tamu.siswa?.namasiswa || "-"}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-left">
-                      {tamu.pegawai?.nama_pegawai} ({tamu.jabatan?.nama_jabatan})
+                      {tamu.pegawai?.namapegawai} ({tamu.jabatan?.jabatan}
+                      )
                     </td>
                     <td className="px-3 py-3 whitespace-normal max-w-xs">
                       {tamu.keperluan}
@@ -505,14 +658,14 @@ const BukuTamu = () => {
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-center">
                       <div className="flex justify-center gap-2">
-                        <button 
-                          onClick={() => handleViewDetail(tamu.id)} 
+                        <button
+                          onClick={() => handleViewDetail(tamu.id)}
                           className="bg-sky-100 text-sky-800 font-semibold p-2 rounded-lg hover:bg-sky-200 transition flex items-center gap-1"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button 
-                          onClick={() => confirmDelete(tamu)} 
+                        <button
+                          onClick={() => confirmDelete(tamu)}
                           className="bg-red-100 text-red-800 font-semibold p-2 rounded-lg hover:bg-red-200 transition flex items-center gap-1"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -524,7 +677,9 @@ const BukuTamu = () => {
                 {!loading && bukuTamu.length === 0 && (
                   <tr>
                     <td colSpan={9} className="text-center py-6 text-gray-500">
-                      {debouncedTerm ? "Tidak ada data yang cocok dengan pencarian." : "Tidak ada data buku tamu."}
+                      {debouncedTerm
+                        ? "Tidak ada data yang cocok dengan pencarian."
+                        : "Tidak ada data buku tamu."}
                     </td>
                   </tr>
                 )}
@@ -538,8 +693,11 @@ const BukuTamu = () => {
             <div className="flex items-center gap-2">
               <span>Baris per halaman:</span>
               <select
-                value={rowsPerPage} 
-                onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
                 className="px-2 py-1 bg-transparent focus:outline-none border rounded-md"
               >
                 <option value={5}>5</option>
@@ -548,19 +706,27 @@ const BukuTamu = () => {
                 <option value={50}>50</option>
               </select>
             </div>
-            <span>Menampilkan <strong>{pagination.from}-{pagination.to}</strong> dari <strong>{pagination.total}</strong></span>
+            <span>
+              Menampilkan{" "}
+              <strong>
+                {pagination.from}-{pagination.to}
+              </strong>{" "}
+              dari <strong>{pagination.total}</strong>
+            </span>
             <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setCurrentPage(p => p - 1)} 
-                disabled={currentPage === 1} 
+              <button
+                onClick={() => setCurrentPage((p) => p - 1)}
+                disabled={currentPage === 1}
                 className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
               >
                 Sebelumnya
               </button>
-              <span>Hal {pagination.current_page} dari {pagination.last_page}</span>
-              <button 
-                onClick={() => setCurrentPage(p => p + 1)} 
-                disabled={currentPage === pagination.last_page} 
+              <span>
+                Hal {pagination.current_page} dari {pagination.last_page}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => p + 1)}
+                disabled={currentPage === pagination.last_page}
                 className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
               >
                 Berikutnya
@@ -573,10 +739,10 @@ const BukuTamu = () => {
       {/* MODAL DETAIL */}
       <AnimatePresence>
         {isDetailModalOpen && (
-          <BukuTamuDetailModal 
-            tamu={selectedTamu} 
-            onClose={closeDetailModal} 
-            loading={loadingDetail} 
+          <BukuTamuDetailModal
+            tamu={selectedTamu}
+            onClose={closeDetailModal}
+            loading={loadingDetail}
           />
         )}
       </AnimatePresence>
