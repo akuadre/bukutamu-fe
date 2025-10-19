@@ -4,10 +4,10 @@ import { Mail, Lock, Calendar, BookOpen, Loader, AlertCircle } from 'lucide-reac
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-// Ganti dengan URL gambar background sekolahmu
-const schoolImageUrl = 'gambar/smkn1cimahi.jpg'; // Contoh URL dari smkn1cimahi.jpg
+const API_URL = 'http://localhost:8000/api'; // URL API Laravel
 
-// --- Animation Variants for Framer Motion ---
+const schoolImageUrl = 'gambar/smkn1cimahi.jpg';
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -39,58 +39,108 @@ const Login = () => {
   
   const navigate = useNavigate();
 
-  // --- Simulasi Fetch Tahun Ajaran ---
+  // Setup axios interceptor untuk handle token
   useEffect(() => {
-    // Di aplikasi nyata, kamu akan fetch data ini dari API
-    // const fetchTahunAjaran = async () => {
-    //   const response = await axios.get('http://localhost:8000/api/tahun-ajaran');
-    //   setThnajaranOptions(response.data);
-    // };
-    // fetchTahunAjaran();
+    // Interceptor untuk menambahkan token ke header
+    const requestInterceptor = axios.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('adminToken');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
 
-    // Untuk sekarang, kita gunakan data dummy
-    const dummyOptions = [
-      { idthnajaran: '1', thnajaran: '2023/2024' },
-      { idthnajaran: '2', thnajaran: '2024/2025' },
-      { idthnajaran: '3', thnajaran: '2025/2026' },
-    ];
-    setThnajaranOptions(dummyOptions);
+    // Interceptor untuk handle token expired
+    const responseInterceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          localStorage.removeItem('adminToken');
+          navigate('/login');
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.request.eject(requestInterceptor);
+      axios.interceptors.response.eject(responseInterceptor);
+    };
+  }, [navigate]);
+
+  // Fetch tahun ajaran dari API
+  useEffect(() => {
+    const fetchTahunAjaran = async () => {
+      try {
+        // Ganti dengan endpoint yang sesuai di Laravel
+        // const response = await axios.get(`${API_URL}/tahun-ajaran`);
+        // setThnajaranOptions(response.data.data || []);
+        
+        // Untuk sementara pakai dummy data
+        const dummyOptions = [
+          { idthnajaran: '1', thnajaran: '2023/2024' },
+          { idthnajaran: '2', thnajaran: '2024/2025' },
+          { idthnajaran: '3', thnajaran: '2025/2026' },
+        ];
+        setThnajaranOptions(dummyOptions);
+      } catch (err) {
+        console.error('Gagal mengambil data tahun ajaran:', err);
+      }
+    };
+
+    fetchTahunAjaran();
   }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
     if (!thnajaran) {
       setError('Silakan pilih tahun ajaran terlebih dahulu.');
       return;
     }
+
     setLoading(true);
     setError('');
 
     try {
-      // --- UNCOMMENT BAGIAN INI UNTUK KONEKSI KE BACKEND ---
-      // const response = await axios.post('http://localhost:8000/api/login', {
-      //   email,
-      //   password,
-      //   idthnajaran: thnajaran,
-      // });
-      
-      // // Simpan token ke localStorage
-      // localStorage.setItem('adminToken', response.data.token);
+      const response = await axios.post(`${API_URL}/login`, {
+        email,
+        password,
+        idthnajaran: thnajaran,
+      });
 
-      // --- Simulasi Login Berhasil ---
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      localStorage.setItem('adminToken', 'dummy-bearer-token');
-      
-      // Redirect ke dashboard
-      navigate('/');
-
+      if (response.data.success) {
+        // Simpan token dan data user
+        localStorage.setItem('adminToken', response.data.data.access_token);
+        localStorage.setItem('userData', JSON.stringify(response.data.data.user));
+        localStorage.setItem('idthnajaran', response.data.data.idthnajaran);
+        
+        // Redirect ke dashboard
+        navigate('/dashboard');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Email atau Password salah!');
-      console.error(err);
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.errors?.email?.[0] || 
+                          'Terjadi kesalahan saat login';
+      setError(errorMessage);
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
   };
+
+  // Cek jika sudah login, redirect ke dashboard
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen w-full bg-gray-100 flex items-center justify-center p-4 lg:p-8">
@@ -203,7 +253,6 @@ const Login = () => {
                   scale: 1.15,
                   opacity: 0.9,
                   y: -10,
-                  dropShadow: "0px 8px 24px rgba(0,0,0,0.25)"
                 }}
                 transition={{ type: "spring", stiffness: 300 }}
               />

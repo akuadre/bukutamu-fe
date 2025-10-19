@@ -49,10 +49,18 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    setIsDropdownOpen(false);
-    localStorage.removeItem("adminToken");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_URL}/logout`);
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      setIsDropdownOpen(false);
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("userData");
+      localStorage.removeItem("idthnajaran");
+      navigate("/login");
+    }
   };
 
   const getInitials = (name) => {
