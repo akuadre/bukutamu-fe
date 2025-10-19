@@ -1,5 +1,3 @@
-// src/components/Navbar.jsx
-
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,19 +9,42 @@ import {
   Clock,
   ChevronDown,
 } from "lucide-react";
+import axios from "axios"; // TAMBAH IMPORT AXIOS
+
+const API_URL = 'http://localhost:8000/api'; // TAMBAH API URL
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState("--:--");
+  const [userData, setUserData] = useState(null);
+  const [tahunAjaran, setTahunAjaran] = useState("");
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
+  // Ambil data user dan tahun ajaran dari localStorage
+  useEffect(() => {
+    const userFromStorage = localStorage.getItem("userData");
+    const thnAjaranFromStorage = localStorage.getItem("thnajaran");
+    
+    if (userFromStorage) {
+      try {
+        setUserData(JSON.parse(userFromStorage));
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        setUserData({ name: "Admin", role: "Administrator" });
+      }
+    } else {
+      setUserData({ name: "Admin", role: "Administrator" });
+    }
+
+    setTahunAjaran(thnAjaranFromStorage || "2024/2025");
+  }, []);
+
   const user = {
-    name: "Tata Usaha",
-    role: "Admin SMKN 1 Cimahi",
+    name: userData?.name || "Admin",
+    role: userData?.role || "Administrator",
     avatar: null,
   };
-  const tahunAjaran = "2024/2025 Genap";
 
   useEffect(() => {
     const updateClock = () => {
@@ -51,14 +72,26 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${API_URL}/logout`);
+      // Panggil API logout jika ada token
+      const token = localStorage.getItem("adminToken");
+      if (token) {
+        await axios.post(`${API_URL}/logout`, {}, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+      }
     } catch (err) {
       console.error("Logout error:", err);
+      // Tetap lanjut logout meski API error
     } finally {
-      setIsDropdownOpen(false);
+      // Clear semua data dari localStorage
       localStorage.removeItem("adminToken");
       localStorage.removeItem("userData");
       localStorage.removeItem("idthnajaran");
+      localStorage.removeItem("thnajaran");
+      
+      setIsDropdownOpen(false);
       navigate("/login");
     }
   };
@@ -72,7 +105,6 @@ const Navbar = () => {
   };
 
   return (
-    // [!] Efek Glassmorphism yang disempurnakan: lebih transparan, tanpa border, dengan shadow lembut
     <motion.header
       className="fixed top-0 left-72 right-0 h-24 bg-white/70 backdrop-blur-xl z-30 shadow-sm shadow-black/5"
       initial={{ y: -100, opacity: 0 }}
@@ -80,7 +112,7 @@ const Navbar = () => {
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
       <div className="flex justify-between items-center h-full px-8">
-        {/* [!] Info Cluster: Jam dan TA digabung dalam satu 'pill' stylish */}
+        {/* Info Cluster: Jam dan TA */}
         <div className="flex items-center gap-4 bg-gray-100/80 border border-gray-200/80 rounded-full px-4 py-2">
           <div className="flex items-center gap-2 text-gray-700">
             <Clock size={18} className="text-sky-600" />
@@ -88,7 +120,7 @@ const Navbar = () => {
               {currentTime}
             </span>
           </div>
-          <div className="h-4 w-px bg-gray-300"></div> {/* Separator */}
+          <div className="h-4 w-px bg-gray-300"></div>
           <div className="hidden md:flex items-center gap-2 text-sm text-gray-700">
             <CalendarDays size={18} className="text-sky-600" />
             <span className="font-medium">
@@ -97,7 +129,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* [!] Tombol Profil yang disempurnakan */}
+        {/* Tombol Profil */}
         <div className="relative" ref={dropdownRef}>
           <motion.button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -108,7 +140,7 @@ const Navbar = () => {
               <p className="font-semibold text-sm text-gray-800">{user.name}</p>
               <p className="text-xs text-gray-500">{user.role}</p>
             </div>
-            {/* [!] Avatar dengan status ring */}
+            {/* Avatar dengan status ring */}
             <div className="relative">
               <div className="w-11 h-11 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg ring-2 ring-offset-2 ring-offset-white ring-sky-300">
                 {user.avatar ? (
@@ -134,7 +166,7 @@ const Navbar = () => {
           <AnimatePresence>
             {isDropdownOpen && (
               <motion.div
-                className="origin-top-right absolute right-0 mt-3 w-64 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                className="origin-top-right absolute right-0 mt-3 w-64 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-40"
                 initial={{ opacity: 0, scale: 0.95, y: -10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -146,20 +178,21 @@ const Navbar = () => {
                       {user.name}
                     </p>
                     <p className="text-xs text-gray-500">{user.role}</p>
+                    <p className="text-xs text-sky-600 mt-1">
+                      Tahun Ajaran: {tahunAjaran}
+                    </p>
                   </div>
                   <Link
-                    to="/dashboard"
-                    className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors pointer-events-none opacity-50"
+                    to="/profile"
+                    className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
                   >
-                    <User size={16} className="mr-3 text-gray-500" /> Profil
-                    Saya
+                    <User size={16} className="mr-3 text-gray-500" /> Profil Saya
                   </Link>
                   <Link
-                    to="/dashboard"
-                    className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors pointer-events-none opacity-50"
+                    to="/settings"
+                    className="flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
                   >
-                    <Settings size={16} className="mr-3 text-gray-500" />{" "}
-                    Pengaturan
+                    <Settings size={16} className="mr-3 text-gray-500" /> Pengaturan
                   </Link>
                   <div className="border-t border-gray-200 mt-1 pt-1">
                     <button
