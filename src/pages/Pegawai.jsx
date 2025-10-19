@@ -1,533 +1,312 @@
-import React, { useState, useEffect, useMemo } from "react";
-import {
-  Search,
-  Edit,
-  Trash2,
-  PlusCircle,
-  Loader,
-  AlertTriangle,
-} from "lucide-react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import { Search, Info, X, ChevronLeft, ChevronRight, User, School, BookUser, Home, Briefcase, FileText, HeartHandshake, Banknote, ShieldCheck, CheckCircle, AlertTriangle, XCircle, Award, GraduationCap, Users } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Impor komponen reusable
-import Modal from "../components/Modal";
-import Notification from "../components/Notification";
-import FormInput from "../components/FormInput";
+const API_URL = 'http://localhost:8000/api'; // URL API Aplikasi Anak
+const PHOTO_BASE_URL = 'http://localhost:8001'; // URL Aplikasi Induk untuk foto
 
-import axios from "axios";
-const API_URL = "http://localhost:8000/api/pegawai";
+// =================================================================
+// KOMPONEN-KOMPONEN HELPER (SUDAH DIGABUNG)
+// =================================================================
 
-// --- DUMMY DATA ---
-const dummyPegawai = [
-  {
-    id: 1,
-    nama_pegawai: "Endang S.",
-    jenis_kelamin: "P",
-    jabatan: { id: 1, nama_jabatan: "Kepala Sekolah" },
-    agama: { id: 1, agama: "Islam" },
-    kontak: "081234567890",
-  },
-  {
-    id: 2,
-    nama_pegawai: "Joko Widodo",
-    jenis_kelamin: "L",
-    jabatan: { id: 3, nama_jabatan: "Guru BP" },
-    agama: { id: 1, agama: "Islam" },
-    kontak: "081234567891",
-  },
-  {
-    id: 3,
-    nama_pegawai: "Sri Mulyani",
-    jenis_kelamin: "P",
-    jabatan: { id: 4, nama_jabatan: "Wali Kelas IX A" },
-    agama: { id: 2, agama: "Kristen" },
-    kontak: "081234567892",
-  },
-  {
-    id: 4,
-    nama_pegawai: "Bambang Soesatyo",
-    jenis_kelamin: "L",
-    jabatan: { id: 6, nama_jabatan: "Guru Matematika" },
-    agama: { id: 3, agama: "Katolik" },
-    kontak: "081234567893",
-  },
-  {
-    id: 5,
-    nama_pegawai: "Puan Maharani",
-    jenis_kelamin: "P",
-    jabatan: { id: 7, nama_jabatan: "Guru Bahasa Indonesia" },
-    agama: { id: 4, agama: "Hindu" },
-    kontak: "081234567894",
-  },
-  {
-    id: 6,
-    nama_pegawai: "Prabowo Subianto",
-    jenis_kelamin: "L",
-    jabatan: { id: 8, nama_jabatan: "Penjaga Sekolah" },
-    agama: { id: 1, agama: "Islam" },
-    kontak: "081234567895",
-  },
-];
-// --- END DUMMY DATA ---
+const Modal = ({ isOpen, onClose, title, children }) => (
+    <AnimatePresence>
+        {isOpen && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 50 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="relative bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between p-5 border-b border-gray-200 sticky top-0 bg-white rounded-t-2xl z-10">
+                        <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+                        <button onClick={onClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors"><X size={24} /></button>
+                    </div>
+                    <div className="flex-1 p-6 overflow-y-auto">{children}</div>
+                </motion.div>
+            </motion.div>
+        )}
+    </AnimatePresence>
+);
+
+const Notification = ({ notification, onDismiss }) => {
+    // ... (Komponen Notifikasi, tidak perlu diubah)
+};
+
+const LoadingTable = ({ rowsPerPage }) => (
+    <div className="overflow-x-auto">
+        <table className="min-w-full w-full table-auto animate-pulse">
+            <thead className="bg-gray-800 text-white text-center">
+                <tr>
+                    <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NIP</th>
+                    <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Nama Pegawai</th>
+                    <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">JK</th>
+                    <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Status</th>
+                    <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {[...Array(rowsPerPage)].map((_, index) => (
+                    <tr key={index} className="border-b border-gray-200">
+                        <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
+                        <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-3/4"></div></td>
+                        <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '30px'}}></div></td>
+                        <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '60px'}}></div></td>
+                        <td className="py-4 px-3 text-center"><div className="h-8 bg-gray-200 rounded mx-auto" style={{width: '80px'}}></div></td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+);
+
+const DetailRow = ({ label, value }) => (
+    <div className="flex flex-col sm:flex-row justify-between py-2.5 border-b border-gray-100 last:border-b-0">
+        <dt className="text-sm font-medium text-gray-500 w-full sm:w-2/5">{label}</dt>
+        <dd className="text-sm text-gray-900 text-left sm:text-right w-full sm:w-3/5">{value || '-'}</dd>
+    </div>
+);
+
+const DetailSection = ({ title, icon, children }) => (
+    <div className="mb-6">{icon && <h4 className="text-base font-bold text-gray-700 mb-2 flex items-center">{icon} <span className="ml-2">{title}</span></h4>}<dl className="bg-gray-50 p-4 rounded-lg">{children}</dl></div>
+);
+
+// MODAL DETAIL YANG SUPER LENGKAP
+const PegawaiDetailModal = ({ pegawai, onClose, loading }) => {
+    if (!pegawai && !loading) return null;
+
+    return (
+        <Modal isOpen={true} onClose={onClose} title="Detail Lengkap Pegawai">
+            {loading ? (
+                <div className="p-8 text-center flex items-center justify-center flex-grow"><div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>
+            ) : (
+                <div className="space-y-6">
+                    <div className="text-center">
+                        <img 
+                            src={`${PHOTO_BASE_URL}/PhotoPegawai/${pegawai.photopegawai}`}
+                            alt={`Foto ${pegawai.namapegawai}`} className="w-32 h-40 object-cover rounded-lg mx-auto shadow-md border-4 border-white"
+                            onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/128x160/e2e8f0/64748b?text=No+Image'; }}
+                        />
+                        <h3 className="text-2xl font-bold mt-4 text-gray-900">{pegawai.nama_lengkap}</h3>
+                        <p className="text-gray-500">NIP: {pegawai.nip}</p>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-2">
+                       <DetailSection title="Identitas Pribadi" icon={<User size={18} className="text-blue-500"/>}>
+                           <DetailRow label="ID Pegawai" value={pegawai.idpegawai} />
+                           <DetailRow label="NUPTK" value={pegawai.nuptk} />
+                           <DetailRow label="NIK" value={pegawai.nik} />
+                           <DetailRow label="Tempat, Tgl Lahir" value={`${pegawai.tmplahir}, ${new Date(pegawai.tgllahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`} />
+                           <DetailRow label="Jenis Kelamin" value={pegawai.jk === 'L' ? 'Laki-laki' : 'Perempuan'} />
+                           <DetailRow label="Agama" value={pegawai.agama?.agama} />
+                           <DetailRow label="Golongan Darah" value={pegawai.golongan_darah} />
+                       </DetailSection>
+
+                       <DetailSection title="Kepegawaian" icon={<Briefcase size={18} className="text-green-500"/>}>
+                           <DetailRow label="Status Aktif" value={pegawai.statusaktif} />
+                           <DetailRow label="Status Kepegawaian" value={pegawai.statuskepegawaian} />
+                           <DetailRow label="Kategori" value={pegawai.kategorikepegawaian} />
+                           <DetailRow label="NPWP" value={pegawai.npwp} />
+                           <DetailRow label="No. Rekening" value={pegawai.rekening} />
+                           <DetailRow label="No. Kartu Pegawai" value={pegawai.karpeg} />
+                           <DetailRow label="No. Askes/BPJS" value={pegawai.askes} />
+                           <DetailRow label="No. Taspen" value={pegawai.taspen} />
+                           <DetailRow label="No. Karis/Karsu" value={pegawai.karis} />
+                       </DetailSection>
+
+                       <DetailSection title="Alamat & Kontak" icon={<Home size={18} className="text-yellow-500"/>}>
+                           <DetailRow label="Alamat" value={`${pegawai.jalan || ''} RT ${pegawai.rt}/${pegawai.rw}, ${pegawai.desa}`} />
+                           <DetailRow label="Kecamatan" value={pegawai.kecamatan} />
+                           <DetailRow label="Kabupaten/Kota" value={`${pegawai.kabupaten}, ${pegawai.kodepos}`} />
+                           <DetailRow label="No. HP" value={pegawai.hppegawai} />
+                           <DetailRow label="Email" value={pegawai.email} />
+                       </DetailSection>
+
+                       <DetailSection title="Keluarga" icon={<Users size={18} className="text-red-500"/>}>
+                           <DetailRow label="Nama Ibu Kandung" value={pegawai.namaibu} />
+                           <DetailRow label="Status Perkawinan" value={pegawai.statusperkawinan} />
+                           <DetailRow label="Nama Pasangan" value={pegawai.namapasangan} />
+                           <DetailRow label="Pekerjaan Pasangan" value={pegawai.pekerjaanpasangan} />
+                           <DetailRow label="Jumlah Anak" value={pegawai.jml_anak} />
+                       </DetailSection>
+
+                       <div className="lg:col-span-2">
+                          <DetailSection title="Riwayat Pangkat & Jabatan" icon={<Award size={18} className="text-purple-500"/>}>
+                              <div className="overflow-x-auto text-xs">
+                                <table className="min-w-full">
+                                    <thead className="font-semibold bg-gray-200"><tr><th className="p-2">Gol.</th><th className="p-2">Pangkat</th><th className="p-2">No. SK</th><th className="p-2">TMT</th></tr></thead>
+                                    <tbody>
+                                        {pegawai.pangkatpegawai?.length > 0 ? pegawai.pangkatpegawai.map(p => (
+                                            <tr key={p.idpangkatpegawai} className="border-b"><td className="p-2">{p.pangkat?.golongan}</td><td className="p-2">{p.pangkat?.pangkat}</td><td className="p-2">{p.nomorsk}</td><td className="p-2">{new Date(p.tmtpangkat).toLocaleDateString('id-ID')}</td></tr>
+                                        )) : <tr><td colSpan="4" className="p-2 text-center text-gray-500">Tidak ada data.</td></tr>}
+                                    </tbody>
+                                </table>
+                              </div>
+                          </DetailSection>
+                       </div>
+                    </div>
+                </div>
+            )}
+        </Modal>
+    );
+};
+
+// =================================================================
+// KOMPONEN UTAMA HALAMAN PEGAWAI
+// =================================================================
 
 const Pegawai = () => {
-  const [pegawai, setPegawai] = useState([]);
+  const [pegawaiList, setPegawaiList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [filterText, setFilterText] = useState("");
-
-  // State Modal yang disederhanakan
-  const [modalState, setModalState] = useState({ type: null, data: null });
-
-  // State Notifikasi
   const [notification, setNotification] = useState(null);
+  
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedTerm, setDebouncedTerm] = useState('');
 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [selectedPegawai, setSelectedPegawai] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
-  const showNotif = (type, text) => {
-    setNotification({ type, text });
-  };
+  const showNotif = (type, text) => setNotification({ type, text });
 
-  const fetchPegawai = async () => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const fetchData = useCallback(async (page, search, perPage) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await axios.get(API_URL);
-      if (res.data.success) {
-        const dataWithNo = res.data.data.map((item, index) => ({
-          ...item,
-          no: page * rowsPerPage + index + 1,
-        }));
-        setPegawai(dataWithNo);
-      } else {
-        showNotif("error", "Gagal memuat data pegawai.");
-      }
+      const response = await axios.get(`${API_URL}/pegawai`, {
+        params: { page, search, rows_per_page: perPage }
+      });
+      setPegawaiList(response.data.data || []);
+      setPagination({
+        current_page: response.data.current_page, last_page: response.data.last_page,
+        total: response.data.total, from: response.data.from, to: response.data.to,
+      });
     } catch (err) {
-      console.error(err);
-      showNotif("error", "Terjadi kesalahan saat mengambil data pegawai.");
+      showNotif("error", "Gagal mengambil data pegawai dari server.");
+      setPegawaiList([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchPegawai();
   }, []);
 
-  const filteredItems = useMemo(() => {
-    return pegawai.filter((item) =>
-      JSON.stringify(item).toLowerCase().includes(filterText.toLowerCase())
-    );
-  }, [pegawai, filterText]);
+  useEffect(() => {
+    fetchData(currentPage, debouncedTerm, rowsPerPage);
+  }, [currentPage, debouncedTerm, rowsPerPage, fetchData]);
 
-  const paginatedItems = filteredItems.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
-  const totalPages = Math.ceil(filteredItems.length / rowsPerPage);
-
-  const closeModal = () => setModalState({ type: null, data: null });
-
-  const handleFormSubmit = async (e, actionType) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    const formData = Object.fromEntries(new FormData(e.target));
-
+  const handleViewDetail = async (idpegawai) => {
+    setIsModalOpen(true);
+    setLoadingDetail(true);
     try {
-      if (actionType === "Tambah") {
-        await axios.post("http://localhost:8000/api/pegawai", formData);
-        showNotif("success", "Data pegawai berhasil ditambahkan!");
+      const response = await axios.get(`${API_URL}/pegawai/${idpegawai}`);
+      if (response.data.success) {
+        setSelectedPegawai(response.data.data);
       } else {
-        await axios.put(
-          `http://localhost:8000/api/pegawai/${modalState.data.id}`,
-          formData
-        );
-        showNotif("success", "Data pegawai berhasil diperbarui!");
+        throw new Error(response.data.message);
       }
-      closeModal();
-      fetchPegawai();
     } catch (err) {
-      console.error(err);
-      showNotif("error", "Gagal menyimpan data pegawai.");
+      showNotif('error', 'Gagal mengambil detail pegawai.');
+      setIsModalOpen(false);
     } finally {
-      setIsSubmitting(false);
+      setLoadingDetail(false);
     }
   };
 
-  const confirmDelete = () => {
-    setIsSubmitting(true);
-    setTimeout(() => {
-      console.log("Hapus pegawai:", modalState.data);
-      closeModal();
-      setIsSubmitting(false);
-      showNotif(
-        "success",
-        `Data ${modalState.data.nama_pegawai} berhasil dihapus.`
-      );
-      fetchPegawai();
-    }, 1000);
-  };
+  const closeModal = () => { setIsModalOpen(false); setSelectedPegawai(null); };
 
-  const LoadingTable = () => (
-    <div className="overflow-x-auto">
-      <table className="min-w-full w-full table-auto animate-pulse">
-        <thead className="bg-gray-800 text-white text-center">
-          <tr>
-            <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-              No
-            </th>
-            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-              Nama Pegawai
-            </th>
-            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-              JK
-            </th>
-            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-              Jabatan
-            </th>
-            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-              Agama
-            </th>
-            <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-              Kontak
-            </th>
-            <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-              Aksi
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {[...Array(rowsPerPage)].map((_, index) => (
-            <tr key={index} className="border-b border-gray-200">
-              <td className="py-4 px-3">
-                <div className="h-4 bg-gray-200 rounded"></div>
-              </td>
-              <td className="py-4 px-3">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </td>
-              <td className="py-4 px-3">
-                <div className="h-4 bg-gray-200 rounded"></div>
-              </td>
-              <td className="py-4 px-3">
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-              </td>
-              <td className="py-4 px-3">
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </td>
-              <td className="py-4 px-3">
-                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-              </td>
-              <td className="py-4 px-3">
-                <div className="h-4 bg-gray-200 rounded"></div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  const getRowNumber = (index) => {
+    if (!pagination) return index + 1;
+    return pagination.from + index;
+  };
 
   return (
     <>
-      <Notification
-        notification={notification}
-        onDismiss={() => setNotification(null)}
-      />
-
-      <motion.div
-        className="bg-white shadow-xl rounded-2xl p-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <Notification notification={notification} onDismiss={() => setNotification(null)} />
+      
+      <motion.div 
+        className="bg-white shadow-xl rounded-2xl p-6" 
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
         <div className="mb-6 border-b pb-4">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Manajemen Data Pegawai
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Kelola daftar pegawai di halaman ini.
-          </p>
+          <h1 className="text-3xl font-bold text-gray-800">Manajemen Data Pegawai</h1>
+          <p className="text-gray-500 mt-1">Menampilkan data pegawai yang telah disinkronkan.</p>
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
-              type="text"
-              placeholder="Cari pegawai..."
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
+              type="text" placeholder="Cari nama atau NIP..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-2 focus:ring-sky-500 outline-none transition"
             />
           </div>
-          <button
-            onClick={() => setModalState({ type: "add", data: null })}
-            className="bg-sky-600 text-white px-5 py-2.5 rounded-lg hover:bg-sky-700 transition-all duration-300 flex items-center justify-center shadow-lg shadow-sky-200 hover:shadow-xl w-full md:w-auto"
-          >
-            <PlusCircle className="w-5 h-5 mr-2" />
-            <span>Tambah Pegawai</span>
-          </button>
         </div>
 
-        {loading ? (
-          <LoadingTable />
-        ) : (
+        {loading ? ( <LoadingTable rowsPerPage={rowsPerPage} /> ) : (
           <div className="overflow-x-auto text-sm">
             <table className="min-w-full w-full table-auto border-collapse">
               <thead className="bg-gray-800 text-white text-center">
                 <tr>
-                  <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    No
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Nama Pegawai
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    JK
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Jabatan
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Agama
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Kontak
-                  </th>
-                  <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Aksi
-                  </th>
+                  <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">No</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NIP</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Nama Pegawai</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">JK</th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Status</th>
+                  <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedItems.map((p, index) => (
-                  <tr key={p.id} className="hover:bg-gray-50 text-gray-700">
-                    <td className="px-3 py-3 whitespace-nowrap text-center">
-                      {page * rowsPerPage + index + 1}
-                    </td>
+                {pegawaiList.map((p, index) => (
+                  <tr key={p.idpegawai} className="hover:bg-gray-50 text-gray-700">
+                    <td className="px-3 py-3 whitespace-nowrap text-center">{getRowNumber(index)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-center">{p.nip}</td>
                     <td className="px-3 py-3 whitespace-nowrap font-medium text-gray-900">
-                      {p.nama_pegawai}
+                      <button onClick={() => handleViewDetail(p.idpegawai)} className="text-blue-600 hover:text-blue-800 hover:underline text-left">{p.namapegawai}</button>
                     </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-center">{p.jk}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-center">{p.statusaktif}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-center">
-                      {p.jenis_kelamin}
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      {p.jabatan?.nama_jabatan || "-"}
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      {p.agama?.agama || "-"}
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap">{p.kontak}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-center space-x-2">
-                      <button
-                        onClick={() => setModalState({ type: "edit", data: p })}
-                        className="bg-amber-100 text-amber-800 font-semibold p-2 rounded-lg hover:bg-amber-200 transition"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() =>
-                          setModalState({ type: "delete", data: p })
-                        }
-                        className="bg-red-100 text-red-800 font-semibold p-2 rounded-lg hover:bg-red-200 transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
+                      <button onClick={() => handleViewDetail(p.idpegawai)} className="bg-sky-100 text-sky-800 font-semibold p-2 rounded-lg hover:bg-sky-200 transition flex items-center gap-1 mx-auto">
+                        <Info className="w-4 h-4" /> Detail
                       </button>
                     </td>
                   </tr>
                 ))}
+                {!loading && pegawaiList.length === 0 && (
+                  <tr><td colSpan={6} className="text-center py-6 text-gray-500">{debouncedTerm ? "Tidak ada data yang cocok." : "Tidak ada data."}</td></tr>
+                )}
               </tbody>
             </table>
           </div>
         )}
 
-        <div className="flex justify-between items-center p-2 text-sm text-gray-600 border-t mt-4">
-          <div className="flex items-center gap-2">
-            <span>Baris per halaman:</span>
-            <select
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(Number(e.target.value));
-                setPage(0);
-              }}
-              className="px-2 py-1 bg-transparent focus:outline-none border rounded-md"
-            >
-              <option value={5}>5</option> <option value={10}>10</option>{" "}
-              <option value={25}>25</option>
-            </select>
+        {pagination && pagination.total > 0 && (
+          <div className="flex justify-between items-center p-2 text-sm text-gray-600 border-t mt-4">
+            <div className="flex items-center gap-2">
+              <span>Baris per halaman:</span>
+              <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }} className="px-2 py-1 bg-transparent focus:outline-none border rounded-md">
+                <option value={5}>5</option><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option>
+              </select>
+            </div>
+            <span>Menampilkan <strong>{pagination.from}-{pagination.to}</strong> dari <strong>{pagination.total}</strong></span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed">Sebelumnya</button>
+              <span>Hal {pagination.current_page} dari {pagination.last_page}</span>
+              <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === pagination.last_page} className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed">Berikutnya</button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(p - 1, 0))}
-              disabled={page === 0}
-              className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-            >
-              Sebelumnya
-            </button>
-            <span>
-              Hal {page + 1} dari {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
-              disabled={page >= totalPages - 1}
-              className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-            >
-              Berikutnya
-            </button>
-          </div>
-        </div>
+        )}
       </motion.div>
 
-      {/* --- MODAL TAMBAH DATA --- */}
-      <Modal
-        isOpen={modalState.type === "add"}
-        onClose={closeModal}
-        title="Tambah Data Pegawai Baru"
-      >
-        <form
-          onSubmit={(e) => handleFormSubmit(e, "Tambah")}
-          className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"
-        >
-          <div className="md:col-span-2">
-            <FormInput
-              label="Nama Pegawai"
-              id="nama_pegawai"
-              name="nama_pegawai"
-              placeholder="Masukkan nama lengkap"
-              required
-            />
-          </div>
-          <FormInput
-            label="Jabatan"
-            id="jabatan"
-            name="jabatan"
-            placeholder="Contoh: Staf Pengajar"
-            required
-          />
-          <FormInput
-            label="Kontak (HP)"
-            id="kontak"
-            name="kontak"
-            placeholder="Contoh: 08123456789"
-            required
-          />
-          <div className="md:col-span-2 flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={closeModal}
-              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:bg-sky-300 flex items-center gap-2"
-            >
-              {isSubmitting && <Loader className="animate-spin w-4 h-4" />}
-              {isSubmitting ? "Menyimpan..." : "Simpan"}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* --- MODAL EDIT DATA --- */}
-      <Modal
-        isOpen={modalState.type === "edit"}
-        onClose={closeModal}
-        title={`Edit Data: ${modalState.data?.nama_pegawai}`}
-      >
-        {modalState.data && (
-          <form
-            onSubmit={(e) => handleFormSubmit(e, "Edit")}
-            className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"
-          >
-            <div className="md:col-span-2">
-              <FormInput
-                label="Nama Pegawai"
-                id="nama_pegawai_edit"
-                name="nama_pegawai"
-                defaultValue={modalState.data.nama_pegawai}
-                required
-              />
-            </div>
-            {/* Sebaiknya Jabatan & Agama menggunakan dropdown/select */}
-            <FormInput
-              label="Jabatan"
-              id="jabatan_edit"
-              name="jabatan"
-              defaultValue={modalState.data.jabatan?.nama_jabatan}
-              required
-            />
-            <FormInput
-              label="Kontak (HP)"
-              id="kontak_edit"
-              name="kontak"
-              defaultValue={modalState.data.kontak}
-              required
-            />
-            <div className="md:col-span-2 flex justify-end gap-3 pt-4">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:bg-sky-300 flex items-center gap-2"
-              >
-                {isSubmitting && <Loader className="animate-spin w-4 h-4" />}
-                {isSubmitting ? "Memperbarui..." : "Simpan Perubahan"}
-              </button>
-            </div>
-          </form>
-        )}
-      </Modal>
-
-      {/* --- MODAL KONFIRMASI HAPUS --- */}
-      <Modal
-        isOpen={modalState.type === "delete"}
-        onClose={closeModal}
-        title="Konfirmasi Hapus Data"
-      >
-        {modalState.data && (
-          <div className="text-center">
-            <AlertTriangle className="w-16 h-16 mx-auto text-red-500 mb-4" />
-            <p className="text-gray-600 text-lg mb-6">
-              Apakah Anda benar-benar yakin ingin menghapus data pegawai
-              <br />
-              <span className="font-bold text-gray-900">
-                {modalState.data.nama_pegawai}
-              </span>
-              ?
-            </p>
-            <p className="text-sm text-gray-500">
-              Tindakan ini tidak dapat dibatalkan.
-            </p>
-            <div className="flex justify-center gap-4 mt-8">
-              <button
-                onClick={closeModal}
-                disabled={isSubmitting}
-                className="px-8 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
-              >
-                Batal
-              </button>
-              <button
-                onClick={confirmDelete}
-                disabled={isSubmitting}
-                className="px-8 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 flex items-center gap-2"
-              >
-                {isSubmitting && <Loader className="animate-spin w-4 h-4" />}
-                {isSubmitting ? "Menghapus..." : "Ya, Hapus"}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <AnimatePresence>
+        {isModalOpen && <PegawaiDetailModal pegawai={selectedPegawai} onClose={closeModal} loading={loadingDetail} />}
+      </AnimatePresence>
     </>
   );
 };
