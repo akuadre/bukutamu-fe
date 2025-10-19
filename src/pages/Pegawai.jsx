@@ -53,7 +53,7 @@ const Notification = ({ notification, onDismiss }) => {
 
 const LoadingTable = ({ rowsPerPage }) => (
   <div className="overflow-x-auto">
-    <table className="min-w-full w-full table-auto border-collapse">
+    <table className="min-w-full w-full table-auto animate-pulse">
       <thead className="bg-gray-800 text-white text-center">
         <tr>
           <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">No</th>
@@ -64,7 +64,7 @@ const LoadingTable = ({ rowsPerPage }) => (
           <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
         </tr>
       </thead>
-      <tbody className="bg-white divide-y divide-gray-200 animate-pulse">
+      <tbody className="bg-white divide-y divide-gray-200">
         {[...Array(rowsPerPage)].map((_, i) => (
           <tr key={i} className="h-[52px]"> {/* Sesuaikan tinggi row seperti data asli */}
             <td className="px-3 py-3 text-center">
