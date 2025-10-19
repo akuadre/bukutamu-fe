@@ -29,34 +29,67 @@ const Modal = ({ isOpen, onClose, title, children }) => (
 );
 
 const Notification = ({ notification, onDismiss }) => {
-    // ... (Komponen Notifikasi, tidak perlu diubah)
+    const icons = { success: <CheckCircle className="w-6 h-6" />, error: <XCircle className="w-6 h-6" />, warning: <AlertTriangle className="w-6 h-6" />, info: <Info className="w-6 h-6" /> };
+    const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500', info: 'bg-sky-500' };
+    useEffect(() => {
+        if (notification) {
+            const timer = setTimeout(() => { onDismiss(); }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [notification, onDismiss]);
+    return (
+        <AnimatePresence>
+            {notification && (
+                <motion.div initial={{ opacity: 0, y: -50, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.9 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }} className="fixed top-5 left-1/2 -translate-x-1/2 z-50">
+                    <div className={`flex items-center gap-4 text-white p-4 rounded-xl shadow-2xl ${colors[notification.type]}`}>
+                        {icons[notification.type]}
+                        <span className="font-medium">{notification.text}</span>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
 };
 
 const LoadingTable = ({ rowsPerPage }) => (
-    <div className="overflow-x-auto">
-        <table className="min-w-full w-full table-auto animate-pulse">
-            <thead className="bg-gray-800 text-white text-center">
-                <tr>
-                    <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NIP</th>
-                    <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Nama Pegawai</th>
-                    <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">JK</th>
-                    <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Status</th>
-                    <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                {[...Array(rowsPerPage)].map((_, index) => (
-                    <tr key={index} className="border-b border-gray-200">
-                        <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
-                        <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-3/4"></div></td>
-                        <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '30px'}}></div></td>
-                        <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '60px'}}></div></td>
-                        <td className="py-4 px-3 text-center"><div className="h-8 bg-gray-200 rounded mx-auto" style={{width: '80px'}}></div></td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
+  <div className="overflow-x-auto">
+    <table className="min-w-full w-full table-auto border-collapse">
+      <thead className="bg-gray-800 text-white text-center">
+        <tr>
+          <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">No</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NIP</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Nama Pegawai</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">JK</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Status</th>
+          <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200 animate-pulse">
+        {[...Array(rowsPerPage)].map((_, i) => (
+          <tr key={i} className="h-[52px]"> {/* Sesuaikan tinggi row seperti data asli */}
+            <td className="px-3 py-3 text-center">
+              <div className="h-3 w-6 bg-gray-200 rounded mx-auto"></div>
+            </td>
+            <td className="px-3 py-3 text-center">
+              <div className="h-3 w-20 bg-gray-200 rounded mx-auto"></div>
+            </td>
+            <td className="px-3 py-3">
+              <div className="h-3 w-32 bg-gray-200 rounded"></div>
+            </td>
+            <td className="px-3 py-3 text-center">
+              <div className="h-3 w-8 bg-gray-200 rounded mx-auto"></div>
+            </td>
+            <td className="px-3 py-3 text-center">
+              <div className="h-3 w-16 bg-gray-200 rounded mx-auto"></div>
+            </td>
+            <td className="px-3 py-3 text-center">
+              <div className="h-6 w-20 bg-gray-200 rounded mx-auto"></div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
 );
 
 const DetailRow = ({ label, value }) => (
