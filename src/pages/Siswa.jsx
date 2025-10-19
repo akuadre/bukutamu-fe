@@ -68,32 +68,48 @@ const Notification = ({ notification, onDismiss }) => {
 // =================================================================
 
 const LoadingTable = ({ rowsPerPage }) => (
-    <div className="overflow-x-auto">
-        <table className="min-w-full w-full table-auto animate-pulse">
-            <thead className="bg-gray-800 text-white text-center">
-                <tr>
-                    <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NIS</th>
-                    <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NISN</th>
-                    <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Nama Siswa</th>
-                    <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">JK</th>
-                    <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tahun Masuk</th>
-                    <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                {[...Array(rowsPerPage)].map((_, index) => (
-                    <tr key={index} className="border-b border-gray-200">
-                        <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
-                        <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded"></div></td>
-                        <td className="py-4 px-3"><div className="h-4 bg-gray-200 rounded w-3/4"></div></td>
-                        <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '30px'}}></div></td>
-                        <td className="py-4 px-3 text-center"><div className="h-4 bg-gray-200 rounded mx-auto" style={{width: '60px'}}></div></td>
-                        <td className="py-4 px-3 text-center"><div className="h-8 bg-gray-200 rounded mx-auto" style={{width: '80px'}}></div></td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
+  <div className="overflow-x-auto">
+    <table className="min-w-full w-full table-auto border-collapse">
+      <thead className="bg-gray-800 text-white text-center">
+        <tr>
+          <th className="px-3 py-3 w-12 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">No</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NIS</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">NISN</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">Nama Siswa</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">JK</th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Tahun Masuk</th>
+          <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">Aksi</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200 animate-pulse">
+        {[...Array(rowsPerPage)].map((_, i) => (
+          <tr key={i} className="h-[52px]">
+            <td className="px-3 py-3 text-center">
+              <div className="h-3 w-6 bg-gray-200 rounded mx-auto"></div>
+            </td>
+            <td className="px-3 py-3 text-center">
+              <div className="h-3 w-20 bg-gray-200 rounded mx-auto"></div>
+            </td>
+            <td className="px-3 py-3 text-center">
+              <div className="h-3 w-24 bg-gray-200 rounded mx-auto"></div>
+            </td>
+            <td className="px-3 py-3">
+              <div className="h-3 w-32 bg-gray-200 rounded"></div>
+            </td>
+            <td className="px-3 py-3 text-center">
+              <div className="h-3 w-8 bg-gray-200 rounded mx-auto"></div>
+            </td>
+            <td className="px-3 py-3 text-center">
+              <div className="h-3 w-16 bg-gray-200 rounded mx-auto"></div>
+            </td>
+            <td className="px-3 py-3 text-center">
+              <div className="h-6 w-20 bg-gray-200 rounded mx-auto"></div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
 );
 
 const DetailRow = ({ label, value }) => (
