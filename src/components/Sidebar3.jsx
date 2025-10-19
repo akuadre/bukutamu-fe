@@ -69,22 +69,24 @@ const Sidebar = () => {
   return (
     // [!] Background Gradient Mewah dan penambahan border kanan lembut
     <aside className="fixed top-0 left-0 w-72 h-full bg-gradient-to-br from-[#101831] to-[#1a254a] flex flex-col z-40 border-r border-white/10">
-      {/* [!] Header Aplikasi dengan padding lebih besar */}
-      <div className="flex items-center gap-4 px-6 h-24 border-b border-white/10">
+      {/* App Header */}
+      <div className="flex items-center gap-4 px-6 py-5 border-b border-white/10">
         <motion.img
           src={logoIcon}
           alt="App Logo"
           className="h-10 w-10"
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ duration: 0.6, type: "spring" }}
+          animate={{ rotate: [0, 15, -10, 5, 0] }}
+          transition={{ duration: 1, ease: "easeInOut" }}
         />
-        <Link
-          to="/dashboard"
-          className="text-2xl font-bold text-white tracking-wide"
-        >
-          GuestBook
-        </Link>
+        <div>
+          <Link
+            to="/dashboard"
+            className="text-xl font-bold text-white tracking-wider"
+          >
+            GuestBook
+          </Link>
+          <p className="text-xs text-sky-300/70">Admin Panel</p>
+        </div>
       </div>
 
       {/* Navigation Menu */}
