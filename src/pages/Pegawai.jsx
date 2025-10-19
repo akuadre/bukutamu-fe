@@ -60,93 +60,259 @@ const LoadingTable = ({ rowsPerPage }) => (
 );
 
 const DetailRow = ({ label, value }) => (
-    <div className="flex flex-col sm:flex-row justify-between py-2.5 border-b border-gray-100 last:border-b-0">
-        <dt className="text-sm font-medium text-gray-500 w-full sm:w-2/5">{label}</dt>
-        <dd className="text-sm text-gray-900 text-left sm:text-right w-full sm:w-3/5">{value || '-'}</dd>
-    </div>
+  <div className="flex flex-col py-3 border-b border-gray-100 last:border-b-0">
+    <dt className="text-sm font-semibold text-gray-700 mb-1">{label}</dt>
+    <dd className="text-sm text-gray-900">
+      {value || <span className="text-gray-400">-</span>}
+    </dd>
+  </div>
 );
 
 const DetailSection = ({ title, icon, children }) => (
-    <div className="mb-6">{icon && <h4 className="text-base font-bold text-gray-700 mb-2 flex items-center">{icon} <span className="ml-2">{title}</span></h4>}<dl className="bg-gray-50 p-4 rounded-lg">{children}</dl></div>
+  <div className="mb-6">
+    <h4 className="text-base font-bold text-gray-700 mb-2 flex items-center">
+      {icon} <span className="ml-2">{title}</span>
+    </h4>
+    <dl className="bg-gray-50 p-4 rounded-lg">{children}</dl>
+  </div>
 );
 
-// MODAL DETAIL YANG SUPER LENGKAP
+// MODAL DETAIL PEGAWAI YANG SUPER LENGKAP SEPERTI INDUK
 const PegawaiDetailModal = ({ pegawai, onClose, loading }) => {
-    if (!pegawai && !loading) return null;
+  if (!pegawai && !loading) return null;
 
-    return (
-        <Modal isOpen={true} onClose={onClose} title="Detail Lengkap Pegawai">
-            {loading ? (
-                <div className="p-8 text-center flex items-center justify-center flex-grow"><div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>
+  // Fungsi untuk format currency
+  const formatCurrency = (amount) => {
+    if (!amount) return '-';
+    return new Intl.NumberFormat('id-ID', { 
+      minimumFractionDigits: 0, 
+      maximumFractionDigits: 0 
+    }).format(amount);
+  };
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Detail Lengkap Pegawai">
+      {loading ? (
+        <div className="p-8 text-center flex items-center justify-center flex-grow">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <div className="space-y-6 max-h-[85vh] overflow-y-auto">
+          
+          {/* FOTO DAN IDENTITAS UTAMA */}
+          <div className="text-center bg-gray-50 p-6 rounded-xl">
+            <img 
+              src={`${PHOTO_BASE_URL}/PhotoPegawai/${pegawai.photopegawai}`}
+              alt={`Foto ${pegawai.namapegawai}`} 
+              className="w-32 h-40 object-cover rounded-lg mx-auto shadow-md border-4 border-white"
+              onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/128x160/e2e8f0/64748b?text=No+Image'; }}
+            />
+            <h3 className="text-2xl font-bold mt-4 text-gray-900">{pegawai.nama_lengkap}</h3>
+            <p className="text-gray-500">NIP: {pegawai.nip}</p>
+          </div>
+
+          {/* IDENTITAS PEGAWAI */}
+          <DetailSection title="📌 Identitas" icon={<User size={18} className="text-blue-500"/>}>
+            <DetailRow label="ID Pegawai" value={pegawai.idpegawai} />
+            <DetailRow label="Nama Lengkap" value={<span className="text-lg font-semibold">{pegawai.nama_lengkap}</span>} />
+            <DetailRow label="NIP" value={pegawai.nip} />
+            <DetailRow label="NUPTK" value={pegawai.nuptk} />
+            <DetailRow label="NIK" value={pegawai.nik} />
+            <DetailRow label="Tempat Lahir" value={pegawai.tmplahir} />
+            <DetailRow label="Tanggal Lahir" value={new Date(pegawai.tgllahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })} />
+            <DetailRow label="Jenis Kelamin" value={pegawai.jk === 'L' ? 'Laki-laki' : 'Perempuan'} />
+            <DetailRow label="Agama" value={pegawai.agama?.agama} />
+            <DetailRow label="Status Aktif" value={pegawai.statusaktif} />
+            <DetailRow label="Status Kepegawaian" value={pegawai.statuskepegawaian} />
+            <DetailRow label="Kategori Kepegawaian" value={pegawai.kategorikepegawaian} />
+            <DetailRow label="Nomor Rekening" value={pegawai.rekening} />
+            <DetailRow label="NPWP" value={pegawai.npwp} />
+            <DetailRow label="Golongan Darah" value={pegawai.golongan_darah} />
+            <DetailRow label="No. Kartu Pegawai" value={pegawai.karpeg} />
+            <DetailRow label="No. Askes/BPJS" value={pegawai.askes} />
+            <DetailRow label="No. Taspen" value={pegawai.taspen} />
+            <DetailRow label="No. Karis/Karsu" value={pegawai.karis} />
+          </DetailSection>
+
+          {/* ALAMAT LENGKAP */}
+          <DetailSection title="🏠 Alamat" icon={<Home size={18} className="text-yellow-500"/>}>
+            <DetailRow label="Jalan" value={pegawai.jalan} />
+            <DetailRow label="RT/RW" value={`${pegawai.rt || '-'}/${pegawai.rw || '-'}`} />
+            <DetailRow label="Dusun" value={pegawai.dusun} />
+            <DetailRow label="Desa/Kelurahan" value={pegawai.desa} />
+            <DetailRow label="Kecamatan" value={pegawai.kecamatan} />
+            <DetailRow label="Kabupaten/Kota" value={pegawai.kabupaten} />
+            <DetailRow label="Kode Pos" value={pegawai.kodepos} />
+          </DetailSection>
+
+          {/* KONTAK */}
+          <DetailSection title="📞 Kontak" icon={<FileText size={18} className="text-green-500"/>}>
+            <DetailRow label="Telepon Rumah" value={pegawai.tlprumah} />
+            <DetailRow label="No. HP Pegawai" value={pegawai.hppegawai} />
+            <DetailRow label="Email" value={pegawai.email} />
+          </DetailSection>
+
+          {/* KELUARGA */}
+          <DetailSection title="👨‍👩‍👧‍👦 Keluarga" icon={<Users size={18} className="text-red-500"/>}>
+            <DetailRow label="Nama Ibu Kandung" value={pegawai.namaibu} />
+            <DetailRow label="Status Perkawinan" value={pegawai.statusperkawinan} />
+            <DetailRow label="Nama Pasangan" value={pegawai.namapasangan} />
+            <DetailRow label="Pekerjaan Pasangan" value={pegawai.pekerjaanpasangan} />
+            <DetailRow label="NIP Pasangan" value={pegawai.nippasangan} />
+            <DetailRow label="Jumlah Anak" value={pegawai.jml_anak} />
+          </DetailSection>
+
+          {/* ANAK / ANGGOTA KELUARGA */}
+          <DetailSection title="👧 Daftar Anak / Anggota Keluarga" icon={<Users size={18} className="text-pink-500"/>}>
+            {pegawai.keluargapegawai && pegawai.keluargapegawai.length > 0 ? (
+              <div className="overflow-x-auto text-xs">
+                <table className="min-w-full border border-gray-200">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="p-2 border text-left font-semibold">Nama</th>
+                      <th className="p-2 border text-left font-semibold">Tempat Lahir</th>
+                      <th className="p-2 border text-left font-semibold">Tanggal Lahir</th>
+                      <th className="p-2 border text-left font-semibold">JK</th>
+                      <th className="p-2 border text-left font-semibold">Pendidikan</th>
+                      <th className="p-2 border text-left font-semibold">Nama Sekolah</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pegawai.keluargapegawai.map((kel, index) => (
+                      <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="p-2 border">{kel.nama_anggota_keluarga || '-'}</td>
+                        <td className="p-2 border">{kel.tmp_lahir || '-'}</td>
+                        <td className="p-2 border">{kel.tgl_lahir ? new Date(kel.tgl_lahir).toLocaleDateString('id-ID') : '-'}</td>
+                        <td className="p-2 border">{kel.jk || '-'}</td>
+                        <td className="p-2 border">{kel.pendidikan || '-'}</td>
+                        <td className="p-2 border">{kel.nama_sekolah || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-                <div className="space-y-6">
-                    <div className="text-center">
-                        <img 
-                            src={`${PHOTO_BASE_URL}/PhotoPegawai/${pegawai.photopegawai}`}
-                            alt={`Foto ${pegawai.namapegawai}`} className="w-32 h-40 object-cover rounded-lg mx-auto shadow-md border-4 border-white"
-                            onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/128x160/e2e8f0/64748b?text=No+Image'; }}
-                        />
-                        <h3 className="text-2xl font-bold mt-4 text-gray-900">{pegawai.nama_lengkap}</h3>
-                        <p className="text-gray-500">NIP: {pegawai.nip}</p>
-                    </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-2">
-                       <DetailSection title="Identitas Pribadi" icon={<User size={18} className="text-blue-500"/>}>
-                           <DetailRow label="ID Pegawai" value={pegawai.idpegawai} />
-                           <DetailRow label="NUPTK" value={pegawai.nuptk} />
-                           <DetailRow label="NIK" value={pegawai.nik} />
-                           <DetailRow label="Tempat, Tgl Lahir" value={`${pegawai.tmplahir}, ${new Date(pegawai.tgllahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`} />
-                           <DetailRow label="Jenis Kelamin" value={pegawai.jk === 'L' ? 'Laki-laki' : 'Perempuan'} />
-                           <DetailRow label="Agama" value={pegawai.agama?.agama} />
-                           <DetailRow label="Golongan Darah" value={pegawai.golongan_darah} />
-                       </DetailSection>
-
-                       <DetailSection title="Kepegawaian" icon={<Briefcase size={18} className="text-green-500"/>}>
-                           <DetailRow label="Status Aktif" value={pegawai.statusaktif} />
-                           <DetailRow label="Status Kepegawaian" value={pegawai.statuskepegawaian} />
-                           <DetailRow label="Kategori" value={pegawai.kategorikepegawaian} />
-                           <DetailRow label="NPWP" value={pegawai.npwp} />
-                           <DetailRow label="No. Rekening" value={pegawai.rekening} />
-                           <DetailRow label="No. Kartu Pegawai" value={pegawai.karpeg} />
-                           <DetailRow label="No. Askes/BPJS" value={pegawai.askes} />
-                           <DetailRow label="No. Taspen" value={pegawai.taspen} />
-                           <DetailRow label="No. Karis/Karsu" value={pegawai.karis} />
-                       </DetailSection>
-
-                       <DetailSection title="Alamat & Kontak" icon={<Home size={18} className="text-yellow-500"/>}>
-                           <DetailRow label="Alamat" value={`${pegawai.jalan || ''} RT ${pegawai.rt}/${pegawai.rw}, ${pegawai.desa}`} />
-                           <DetailRow label="Kecamatan" value={pegawai.kecamatan} />
-                           <DetailRow label="Kabupaten/Kota" value={`${pegawai.kabupaten}, ${pegawai.kodepos}`} />
-                           <DetailRow label="No. HP" value={pegawai.hppegawai} />
-                           <DetailRow label="Email" value={pegawai.email} />
-                       </DetailSection>
-
-                       <DetailSection title="Keluarga" icon={<Users size={18} className="text-red-500"/>}>
-                           <DetailRow label="Nama Ibu Kandung" value={pegawai.namaibu} />
-                           <DetailRow label="Status Perkawinan" value={pegawai.statusperkawinan} />
-                           <DetailRow label="Nama Pasangan" value={pegawai.namapasangan} />
-                           <DetailRow label="Pekerjaan Pasangan" value={pegawai.pekerjaanpasangan} />
-                           <DetailRow label="Jumlah Anak" value={pegawai.jml_anak} />
-                       </DetailSection>
-
-                       <div className="lg:col-span-2">
-                          <DetailSection title="Riwayat Pangkat & Jabatan" icon={<Award size={18} className="text-purple-500"/>}>
-                              <div className="overflow-x-auto text-xs">
-                                <table className="min-w-full">
-                                    <thead className="font-semibold bg-gray-200"><tr><th className="p-2">Gol.</th><th className="p-2">Pangkat</th><th className="p-2">No. SK</th><th className="p-2">TMT</th></tr></thead>
-                                    <tbody>
-                                        {pegawai.pangkatpegawai?.length > 0 ? pegawai.pangkatpegawai.map(p => (
-                                            <tr key={p.idpangkatpegawai} className="border-b"><td className="p-2">{p.pangkat?.golongan}</td><td className="p-2">{p.pangkat?.pangkat}</td><td className="p-2">{p.nomorsk}</td><td className="p-2">{new Date(p.tmtpangkat).toLocaleDateString('id-ID')}</td></tr>
-                                        )) : <tr><td colSpan="4" className="p-2 text-center text-gray-500">Tidak ada data.</td></tr>}
-                                    </tbody>
-                                </table>
-                              </div>
-                          </DetailSection>
-                       </div>
-                    </div>
-                </div>
+              <p className="text-sm text-gray-500 p-2">Tidak ada data anak/keluarga.</p>
             )}
-        </Modal>
-    );
+          </DetailSection>
+
+          {/* PENDIDIKAN */}
+          <DetailSection title="🎓 Riwayat Pendidikan" icon={<GraduationCap size={18} className="text-purple-500"/>}>
+            {pegawai.pendidikanpegawai && pegawai.pendidikanpegawai.length > 0 ? (
+              <div className="overflow-x-auto text-xs">
+                <table className="min-w-full border border-gray-200">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="p-2 border text-left font-semibold">Pendidikan</th>
+                      <th className="p-2 border text-left font-semibold">Nama Sekolah</th>
+                      <th className="p-2 border text-left font-semibold">Jurusan</th>
+                      <th className="p-2 border text-left font-semibold">Kota</th>
+                      <th className="p-2 border text-left font-semibold">Nomor Ijazah</th>
+                      <th className="p-2 border text-left font-semibold">Tanggal Ijazah</th>
+                      <th className="p-2 border text-left font-semibold">Penandatangan Ijazah</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pegawai.pendidikanpegawai.map((pd, index) => (
+                      <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="p-2 border">{pd.pendidikan || '-'}</td>
+                        <td className="p-2 border">{pd.nama_sekolah || '-'}</td>
+                        <td className="p-2 border">{pd.jurusan || '-'}</td>
+                        <td className="p-2 border">{pd.kota_sekolah || '-'}</td>
+                        <td className="p-2 border">{pd.nomor_ijazah || '-'}</td>
+                        <td className="p-2 border">{pd.tgl_ijazah ? new Date(pd.tgl_ijazah).toLocaleDateString('id-ID') : '-'}</td>
+                        <td className="p-2 border">{pd.nama_ttd_ijazah || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 p-2">Tidak ada data pendidikan.</p>
+            )}
+          </DetailSection>
+
+          {/* PANGKAT & JABATAN */}
+          <DetailSection title="🏅 Riwayat Pangkat & Jabatan" icon={<Award size={18} className="text-orange-500"/>}>
+            {pegawai.pangkatpegawai && pegawai.pangkatpegawai.length > 0 ? (
+              <div className="overflow-x-auto text-xs">
+                <table className="min-w-full border border-gray-200">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="p-2 border text-left font-semibold">Golongan</th>
+                      <th className="p-2 border text-left font-semibold">Pangkat</th>
+                      <th className="p-2 border text-left font-semibold">Jabatan</th>
+                      <th className="p-2 border text-left font-semibold">Nomor SK</th>
+                      <th className="p-2 border text-left font-semibold">TMT Pangkat</th>
+                      <th className="p-2 border text-left font-semibold">Masa Kerja</th>
+                      <th className="p-2 border text-left font-semibold">Angka Kredit</th>
+                      <th className="p-2 border text-left font-semibold">Gaji Pokok</th>
+                      <th className="p-2 border text-left font-semibold">Tanggal TTD</th>
+                      <th className="p-2 border text-left font-semibold">Pejabat TTD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pegawai.pangkatpegawai.map((pg, index) => (
+                      <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="p-2 border">{pg.pangkat?.golongan || '-'}</td>
+                        <td className="p-2 border">{pg.pangkat?.pangkat || '-'}</td>
+                        <td className="p-2 border">{pg.pangkat?.jabatan || '-'}</td>
+                        <td className="p-2 border">{pg.nomorsk || '-'}</td>
+                        <td className="p-2 border">{pg.tmtpangkat ? new Date(pg.tmtpangkat).toLocaleDateString('id-ID') : '-'}</td>
+                        <td className="p-2 border">{pg.masakerja_tahun ? `${pg.masakerja_tahun} tahun ${pg.masakerja_bulan || 0} bulan` : '-'}</td>
+                        <td className="p-2 border">{pg.angka_kredit || '-'}</td>
+                        <td className="p-2 border">{pg.gaji_pokok ? `Rp ${formatCurrency(pg.gaji_pokok)}` : '-'}</td>
+                        <td className="p-2 border">{pg.tgl_ttd ? new Date(pg.tgl_ttd).toLocaleDateString('id-ID') : '-'}</td>
+                        <td className="p-2 border">{pg.pejabat_ttd || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 p-2">Tidak ada data pangkat/jabatan.</p>
+            )}
+          </DetailSection>
+
+          {/* GAJI BERKALA */}
+          <DetailSection title="💰 Riwayat Gaji Berkala" icon={<Banknote size={18} className="text-teal-500"/>}>
+            {pegawai.gajiberkala && pegawai.gajiberkala.length > 0 ? (
+              <div className="overflow-x-auto text-xs">
+                <table className="min-w-full border border-gray-200">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="p-2 border text-left font-semibold">Nomor SK</th>
+                      <th className="p-2 border text-left font-semibold">TMT Gaji Berkala</th>
+                      <th className="p-2 border text-left font-semibold">Masa Kerja</th>
+                      <th className="p-2 border text-left font-semibold">Gaji Lama</th>
+                      <th className="p-2 border text-left font-semibold">Gaji Baru</th>
+                      <th className="p-2 border text-left font-semibold">Tanggal SK</th>
+                      <th className="p-2 border text-left font-semibold">Pejabat Penetap</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pegawai.gajiberkala.map((gb, index) => (
+                      <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="p-2 border">{gb.nomorsk || '-'}</td>
+                        <td className="p-2 border">{gb.tmtgajiberkala ? new Date(gb.tmtgajiberkala).toLocaleDateString('id-ID') : '-'}</td>
+                        <td className="p-2 border">{gb.masakerja_tahun ? `${gb.masakerja_tahun} tahun ${gb.masakerja_bulan || 0} bulan` : '-'}</td>
+                        <td className="p-2 border">{gb.gaji_pokok_lama ? `Rp ${formatCurrency(gb.gaji_pokok_lama)}` : '-'}</td>
+                        <td className="p-2 border">{gb.gaji_pokok_baru ? `Rp ${formatCurrency(gb.gaji_pokok_baru)}` : '-'}</td>
+                        <td className="p-2 border">{gb.tgl_ttd_sk ? new Date(gb.tgl_ttd_sk).toLocaleDateString('id-ID') : '-'}</td>
+                        <td className="p-2 border">{gb.pejabat_ttd || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 p-2">Tidak ada data gaji berkala.</p>
+            )}
+          </DetailSection>
+        </div>
+      )}
+    </Modal>
+  );
 };
 
 // =================================================================
