@@ -4,7 +4,7 @@ import { Mail, Lock, Calendar, BookOpen, Loader, AlertCircle } from 'lucide-reac
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api'; // URL API Laravel
+const API_URL = 'http://localhost:8000/api';
 
 const schoolImageUrl = 'gambar/smkn1cimahi.jpg';
 
@@ -35,13 +35,13 @@ const Login = () => {
   const [thnajaranOptions, setThnajaranOptions] = useState([]);
   
   const [loading, setLoading] = useState(false);
+  const [loadingTahunAjaran, setLoadingTahunAjaran] = useState(true);
   const [error, setError] = useState('');
   
   const navigate = useNavigate();
 
-  // Setup axios interceptor untuk handle token
+  // Setup axios interceptor
   useEffect(() => {
-    // Interceptor untuk menambahkan token ke header
     const requestInterceptor = axios.interceptors.request.use(
       (config) => {
         const token = localStorage.getItem('adminToken');
@@ -50,17 +50,17 @@ const Login = () => {
         }
         return config;
       },
-      (error) => {
-        return Promise.reject(error);
-      }
+      (error) => Promise.reject(error)
     );
 
-    // Interceptor untuk handle token expired
     const responseInterceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
           localStorage.removeItem('adminToken');
+          localStorage.removeItem('userData');
+          localStorage.removeItem('idthnajaran');
+          localStorage.removeItem('thnajaran');
           navigate('/login');
         }
         return Promise.reject(error);
@@ -73,23 +73,29 @@ const Login = () => {
     };
   }, [navigate]);
 
-  // Fetch tahun ajaran dari API
+  // Fetch tahun ajaran dari API - REAL DATA
   useEffect(() => {
     const fetchTahunAjaran = async () => {
       try {
-        // Ganti dengan endpoint yang sesuai di Laravel
-        // const response = await axios.get(`${API_URL}/tahun-ajaran`);
-        // setThnajaranOptions(response.data.data || []);
+        setLoadingTahunAjaran(true);
+        const response = await axios.get(`${API_URL}/tahun-ajaran`);
         
-        // Untuk sementara pakai dummy data
+        if (response.data.success) {
+          setThnajaranOptions(response.data.data || []);
+        } else {
+          throw new Error(response.data.message);
+        }
+      } catch (err) {
+        console.error('Gagal mengambil data tahun ajaran:', err);
+        setError('Gagal memuat data tahun ajaran. Silakan refresh halaman.');
+        // Fallback ke dummy data jika API error
         const dummyOptions = [
           { idthnajaran: '1', thnajaran: '2023/2024' },
           { idthnajaran: '2', thnajaran: '2024/2025' },
-          { idthnajaran: '3', thnajaran: '2025/2026' },
         ];
         setThnajaranOptions(dummyOptions);
-      } catch (err) {
-        console.error('Gagal mengambil data tahun ajaran:', err);
+      } finally {
+        setLoadingTahunAjaran(false);
       }
     };
 
@@ -115,17 +121,19 @@ const Login = () => {
       });
 
       if (response.data.success) {
-        // Simpan token dan data user
+        // Simpan semua data ke localStorage
         localStorage.setItem('adminToken', response.data.data.access_token);
         localStorage.setItem('userData', JSON.stringify(response.data.data.user));
         localStorage.setItem('idthnajaran', response.data.data.idthnajaran);
+        localStorage.setItem('thnajaran', response.data.data.thnajaran);
         
         // Redirect ke dashboard
         navigate('/dashboard');
       }
     } catch (err) {
       const errorMessage = err.response?.data?.message || 
-                          err.response?.data?.errors?.email?.[0] || 
+                          err.response?.data?.errors?.email?.[0] ||
+                          err.response?.data?.errors?.idthnajaran?.[0] || 
                           'Terjadi kesalahan saat login';
       setError(errorMessage);
       console.error('Login error:', err);
@@ -209,22 +217,28 @@ const Login = () => {
                 value={thnajaran}
                 onChange={(e) => setThnajaran(e.target.value)}
                 required
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition duration-200 appearance-none"
+                disabled={loadingTahunAjaran}
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition duration-200 appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
-                <option value="" disabled>Pilih Tahun Ajaran</option>
+                <option value="" disabled>
+                  {loadingTahunAjaran ? 'Memuat tahun ajaran...' : 'Pilih Tahun Ajaran'}
+                </option>
                 {thnajaranOptions.map((opt) => (
                   <option key={opt.idthnajaran} value={opt.idthnajaran}>
                     {opt.thnajaran}
                   </option>
                 ))}
               </select>
+              {loadingTahunAjaran && (
+                <Loader className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+              )}
             </motion.div>
 
             <motion.div variants={itemVariants}>
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center py-3 px-6 rounded-lg bg-sky-500 text-white font-semibold hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-300 disabled:bg-sky-300"
+                disabled={loading || loadingTahunAjaran}
+                className="w-full flex items-center justify-center py-3 px-6 rounded-lg bg-sky-500 text-white font-semibold hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-300 disabled:bg-sky-300 disabled:cursor-not-allowed"
               >
                 {loading ? <Loader className="animate-spin w-6 h-6" /> : 'Masuk'}
               </button>
