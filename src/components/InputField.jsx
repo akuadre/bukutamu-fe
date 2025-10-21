@@ -1,6 +1,6 @@
 // src/components/InputField.jsx
 import React from "react";
-import Select from "react-select"; // Import react-select
+import Select from "react-select";
 
 // Komponen untuk Input Teks dan Textarea
 export const InputField = ({ icon, label, ...props }) => {
@@ -36,33 +36,50 @@ export const SelectField = ({ icon, label, options, ...props }) => {
 
   // Style kustom untuk React Select agar mirip desain kita
   const customStyles = {
-    control: (provided) => ({
+    control: (provided, state) => ({
       ...provided,
       minHeight: "44px",
       border: "1px solid #cbd5e1",
       borderRadius: "0.5rem",
       paddingLeft: "2.25rem",
-      boxShadow: "none",
+      boxShadow: state.isFocused ? "0 0 0 2px #0ea5e9" : "none",
+      borderColor: state.isFocused ? "#0ea5e9" : "#cbd5e1",
       "&:hover": {
-        borderColor: "#94a3b8",
+        borderColor: state.isFocused ? "#0ea5e9" : "#94a3b8",
       },
     }),
     valueContainer: (provided) => ({
       ...provided,
-      padding: "0 4px",
+      padding: "0 8px",
+    }),
+    input: (provided) => ({
+      ...provided,
+      margin: 0,
+      padding: 0,
     }),
     placeholder: (provided) => ({
       ...provided,
       color: "#94a3b8",
     }),
+    menu: (provided) => ({
+      ...provided,
+      borderRadius: "0.5rem",
+      border: "1px solid #e2e8f0",
+      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? "#0ea5e9" : state.isFocused ? "#f1f5f9" : "white",
+      color: state.isSelected ? "white" : "#334155",
+      "&:hover": {
+        backgroundColor: "#f1f5f9",
+      },
+    }),
   };
 
   return (
     <div className="relative">
-      <label
-        htmlFor={props.id}
-        className="block font-semibold text-slate-700 mb-1"
-      >
+      <label className="block font-semibold text-slate-700 mb-1">
         {label}
       </label>
       <div className="relative">
@@ -74,6 +91,10 @@ export const SelectField = ({ icon, label, options, ...props }) => {
           options={options}
           styles={customStyles}
           placeholder={`Pilih ${label}...`}
+          isSearchable={true}
+          noOptionsMessage={({ inputValue }) => 
+            inputValue ? "Tidak ada hasil ditemukan" : "Tidak ada opsi tersedia"
+          }
           {...props}
         />
       </div>
