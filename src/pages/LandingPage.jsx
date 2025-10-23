@@ -152,24 +152,6 @@ const LandingPage = () => {
             </h1>
           </button>
 
-          <nav className="hidden md:flex items-center gap-6 text-white">
-            {navItems.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => scrollToSection(item.id)}
-                className="cursor-pointer hover:text-sky-300 transition font-medium"
-              >
-                {item.name}
-              </button>
-            ))}
-            <RouterLink 
-              to="/login" 
-              className="ml-4 bg-sky-500 hover:bg-sky-600 text-white px-5 py-2 rounded-full transition transform hover:scale-105 shadow-lg"
-            >
-              Login Admin
-            </RouterLink>
-          </nav>
-
           <div className="md:hidden">
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)} 
