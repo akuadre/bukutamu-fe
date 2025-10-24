@@ -18,6 +18,7 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
+  Filter
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -136,6 +137,9 @@ const LoadingTable = ({ rowsPerPage }) => (
             Foto
           </th>
           <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+            Tahun Ajaran
+          </th>
+          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
             Tanggal
           </th>
           <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
@@ -172,6 +176,12 @@ const LoadingTable = ({ rowsPerPage }) => (
             </td>
             <td className="py-4 px-3 text-center">
               <div className="w-16 h-16 bg-gray-200 rounded-md mx-auto"></div>
+            </td>
+            <td className="py-4 px-3 text-center">
+              <div
+                className="h-4 bg-gray-200 rounded mx-auto"
+                style={{ width: "100px" }}
+              ></div>
             </td>
             <td className="py-4 px-3 text-center">
               <div
@@ -286,6 +296,11 @@ const BukuTamuDetailModal = ({ tamu, onClose, loading }) => {
                 ? `Orang Tua dari ${tamu.siswa?.namasiswa || "-"}`
                 : tamu.instansi || "Tamu Umum"}
             </p>
+            {tamu.tahun_ajaran && (
+              <p className="text-sm text-blue-600 mt-1">
+                Tahun Ajaran: {tamu.tahun_ajaran.thnajaran}
+              </p>
+            )}
           </div>
 
           {/* INFORMASI TAMU */}
@@ -347,9 +362,7 @@ const BukuTamuDetailModal = ({ tamu, onClose, loading }) => {
           >
             <DetailRow
               label="Bertemu Dengan"
-              value={`${tamu.pegawai?.namapegawai || "-"} (${
-                tamu.jabatan?.jabatan || "-"
-              })`}
+              value={tamu.pegawai?.namapegawai || "-"}
               icon={<User size={16} className="text-gray-400" />}
             />
             <DetailRow
@@ -361,6 +374,11 @@ const BukuTamuDetailModal = ({ tamu, onClose, loading }) => {
               label="Nama Siswa"
               value={tamu.siswa?.namasiswa}
               icon={<GraduationCap size={16} className="text-gray-400" />}
+            />
+            <DetailRow
+              label="Tahun Ajaran"
+              value={tamu.tahun_ajaran?.thnajaran}
+              icon={<Calendar size={16} className="text-gray-400" />}
             />
             <DetailRow
               label="Tanggal Kunjungan"
@@ -414,6 +432,8 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, data }) => (
 
 const BukuTamu = () => {
   const [bukuTamu, setBukuTamu] = useState([]);
+  const [tahunAjaranOptions, setTahunAjaranOptions] = useState([]);
+  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState("");
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
 
@@ -431,6 +451,21 @@ const BukuTamu = () => {
 
   const showNotif = (type, text) => setNotification({ type, text });
 
+  // Load tahun ajaran options
+  useEffect(() => {
+    const loadTahunAjaranOptions = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/tahun-ajaran-options`);
+        if (response.data.success) {
+          setTahunAjaranOptions(response.data.data);
+        }
+      } catch (error) {
+        console.error("Gagal memuat opsi tahun ajaran:", error);
+      }
+    };
+    loadTahunAjaranOptions();
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedTerm(searchTerm);
@@ -439,18 +474,17 @@ const BukuTamu = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  useEffect(() => {
-    if (selectedTamu) {
-      console.log("DATA DETAIL TAMU:", selectedTamu);
-    }
-  }, [selectedTamu]);
-
-  const fetchData = useCallback(async (page, search, perPage) => {
+  const fetchData = useCallback(async (page, search, perPage, tahunAjaran) => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/bukutamu`, {
-        params: { page, search, rows_per_page: perPage },
-      });
+      const params = {
+        page,
+        search,
+        rows_per_page: perPage,
+        ...(tahunAjaran && { tahun_ajaran: tahunAjaran })
+      };
+
+      const response = await axios.get(`${API_URL}/bukutamu`, { params });
       setBukuTamu(response.data.data || []);
       setPagination({
         current_page: response.data.current_page,
@@ -468,8 +502,8 @@ const BukuTamu = () => {
   }, []);
 
   useEffect(() => {
-    fetchData(currentPage, debouncedTerm, rowsPerPage);
-  }, [currentPage, debouncedTerm, rowsPerPage, fetchData]);
+    fetchData(currentPage, debouncedTerm, rowsPerPage, selectedTahunAjaran);
+  }, [currentPage, debouncedTerm, rowsPerPage, selectedTahunAjaran, fetchData]);
 
   const handleViewDetail = async (id) => {
     setIsDetailModalOpen(true);
@@ -493,7 +527,7 @@ const BukuTamu = () => {
     try {
       await axios.delete(`${API_URL}/bukutamu/${id}`);
       showNotif("success", "Data buku tamu berhasil dihapus.");
-      fetchData(currentPage, debouncedTerm, rowsPerPage);
+      fetchData(currentPage, debouncedTerm, rowsPerPage, selectedTahunAjaran);
     } catch (err) {
       showNotif("error", "Gagal menghapus data buku tamu.");
     } finally {
@@ -534,6 +568,17 @@ const BukuTamu = () => {
     return pagination.from + index;
   };
 
+  const handleTahunAjaranChange = (e) => {
+    setSelectedTahunAjaran(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setSelectedTahunAjaran("");
+    setSearchTerm("");
+    setCurrentPage(1);
+  };
+
   return (
     <>
       <Notification
@@ -556,16 +601,48 @@ const BukuTamu = () => {
           </p>
         </div>
 
+        {/* FILTER SECTION */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Cari nama tamu, keperluan, atau kontak..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-2 focus:ring-sky-500 outline-none transition"
-            />
+          <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+            {/* Filter Tahun Ajaran */}
+            <div className="relative w-full md:w-64">
+              <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <select
+                value={selectedTahunAjaran}
+                onChange={handleTahunAjaranChange}
+                className="pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-2 focus:ring-sky-500 outline-none transition appearance-none"
+              >
+                <option value="">Semua Tahun Ajaran</option>
+                {tahunAjaranOptions.map((tahun) => (
+                  <option key={tahun.id} value={tahun.id}>
+                    {tahun.tahun_ajaran}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari nama tamu, keperluan, atau kontak..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-2 focus:ring-sky-500 outline-none transition"
+              />
+            </div>
+
+            {/* Clear Filters Button */}
+            {(selectedTahunAjaran || searchTerm) && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2.5 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center gap-2 w-full md:w-auto justify-center"
+              >
+                <X size={16} />
+                Hapus Filter
+              </button>
+            )}
           </div>
 
           <Link
@@ -576,6 +653,28 @@ const BukuTamu = () => {
             <span>Tambah Kunjungan</span>
           </Link>
         </div>
+
+        {/* Active Filters Info */}
+        {(selectedTahunAjaran || searchTerm) && (
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2 text-sm text-blue-800">
+              <Filter size={16} />
+              <span>Filter Aktif:</span>
+              {selectedTahunAjaran && (
+                <span className="bg-blue-100 px-2 py-1 rounded text-xs">
+                  Tahun Ajaran: {
+                    tahunAjaranOptions.find(t => t.id == selectedTahunAjaran)?.tahun_ajaran
+                  }
+                </span>
+              )}
+              {searchTerm && (
+                <span className="bg-blue-100 px-2 py-1 rounded text-xs">
+                  Pencarian: "{searchTerm}"
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <LoadingTable rowsPerPage={rowsPerPage} />
@@ -606,6 +705,9 @@ const BukuTamu = () => {
                     Foto
                   </th>
                   <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+                    Tahun Ajaran
+                  </th>
+                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
                     Tanggal
                   </th>
                   <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
@@ -634,8 +736,7 @@ const BukuTamu = () => {
                       {tamu.siswa?.namasiswa || "-"}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-left">
-                      {tamu.pegawai?.namapegawai} ({tamu.jabatan?.jabatan}
-                      )
+                      {tamu.pegawai?.namapegawai || "-"}
                     </td>
                     <td className="px-3 py-3 whitespace-normal max-w-xs">
                       {tamu.keperluan}
@@ -652,6 +753,9 @@ const BukuTamu = () => {
                           <Camera size={24} className="text-gray-400" />
                         </div>
                       )}
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-center">
+                      {tamu.tahun_ajaran?.thnajaran || "-"}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-center">
                       {formatDate(tamu.created_at)}
@@ -676,9 +780,9 @@ const BukuTamu = () => {
                 ))}
                 {!loading && bukuTamu.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="text-center py-6 text-gray-500">
-                      {debouncedTerm
-                        ? "Tidak ada data yang cocok dengan pencarian."
+                    <td colSpan={10} className="text-center py-6 text-gray-500">
+                      {debouncedTerm || selectedTahunAjaran
+                        ? "Tidak ada data yang cocok dengan filter yang dipilih."
                         : "Tidak ada data buku tamu."}
                     </td>
                   </tr>

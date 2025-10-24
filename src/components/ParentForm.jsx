@@ -1,13 +1,15 @@
-// src/components/ParentForm.jsx
+// src/components-guestbook/ParentForm.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom'; // TAMBAHKAN INI
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   Phone,
   MapPin,
-  Briefcase,
+  User as UserIcon,
   UserCheck,
   MessageSquare,
+  BookOpen,
+  Users
 } from "lucide-react";
 import { InputField, SelectField } from "./InputField";
 import WebcamCapture from "./WebcamCapture";
@@ -16,14 +18,13 @@ import axios from "axios";
 const API_URL = "http://localhost:8000/api";
 
 const ParentForm = () => {
-  const navigate = useNavigate(); // TAMBAHKAN INI
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     nama: "",
     idsiswa: "",
     kontak: "",
     alamat: "",
-    id_jabatan: "",
     id_pegawai: "",
     keperluan: "",
     foto_tamu: "",
@@ -31,158 +32,81 @@ const ParentForm = () => {
 
   const [formOptions, setFormOptions] = useState({
     siswa: [],
-    jabatan: [],
     pegawai: [],
   });
 
-  const [pegawaiOptions, setPegawaiOptions] = useState([]);
+  const [siswaData, setSiswaData] = useState({
+    nis: "",
+    nisn: "", 
+    kelas: "-"
+  });
+
   const [loading, setLoading] = useState(false);
 
-  // Load form data dari API - DENGAN FALLBACK
+  // Load form data dari API
   useEffect(() => {
     const loadFormData = async () => {
       try {
         const response = await axios.get(`${API_URL}/guestbook/data`);
+        console.log('API Response:', response.data);
+        
         if (response.data.success) {
-          const { siswa, jabatan, pegawai } = response.data.data;
-          
-          console.log("Jabatan data structure:", jabatan); // DEBUG
-          
-          // VALIDASI: Pastikan data jabatan ada dan format benar
-          const validatedJabatan = Array.isArray(jabatan) 
-            ? jabatan.map((j) => ({
-                value: j.id || j.idjabatan || j.value, // Multiple fallback
-                label: j.nama_jabatan || j.jabatan || j.label || 'Unknown' // Multiple fallback
-              }))
-            : [];
-
-          console.log("Validated jabatan options:", validatedJabatan); // DEBUG
-
           setFormOptions({
-            siswa: Array.isArray(siswa) ? siswa.map((s) => ({
-              value: s.idsiswa,
-              label: s.namasiswa,
-            })) : [],
-            jabatan: validatedJabatan,
-            pegawai: Array.isArray(pegawai) ? pegawai.map((p) => ({
-              value: p.id,
-              label: p.nama_pegawai,
-            })) : [],
+            siswa: Array.isArray(response.data.data.siswa) ? 
+              response.data.data.siswa.map((s) => ({
+                value: s.value || s.idsiswa,
+                label: s.label || s.namasiswa,
+                nis: s.nis,
+                nisn: s.nisn,
+                kelas: s.kelas
+              })) : [],
+            pegawai: Array.isArray(response.data.data.pegawai) ? 
+              response.data.data.pegawai.map((p) => ({
+                value: p.id,
+                label: p.nama_pegawai,
+              })) : [],
           });
         }
       } catch (error) {
         console.error("Gagal memuat data form:", error);
-        // Set default empty arrays jika error
-        setFormOptions({
-          siswa: [],
-          jabatan: [],
-          pegawai: [],
-        });
       }
     };
 
     loadFormData();
   }, []);
 
-  // Load pegawai ketika jabatan berubah
-  useEffect(() => {
-    if (formData.id_jabatan) {
-      const loadPegawai = async () => {
-        try {
-          const response = await axios.get(
-            `${API_URL}/get-pegawai/${formData.id_jabatan}`
-          );
-          if (response.data.success) {
-            const pegawaiData = response.data.data.map((p) => ({
-              value: p.id,
-              label: p.nama_pegawai,
-            }));
-            setPegawaiOptions(pegawaiData);
-
-            // Auto-select kepala sekolah jika jabatan = 1
-            if (formData.id_jabatan == 1 && pegawaiData.length > 0) {
-              setFormData((prev) => ({
-                ...prev,
-                id_pegawai: pegawaiData[0].value,
-              }));
-            }
-          }
-        } catch (error) {
-          console.error("Gagal memuat data pegawai:", error);
-        }
-      };
-
-      loadPegawai();
-    } else {
-      setPegawaiOptions([]);
-    }
-  }, [formData.id_jabatan]);
-
-  // Load data orangtua ketika siswa berubah - DENGAN VALIDASI
+  // Load data siswa tambahan ketika siswa berubah (NIS, NISN, Kelas)
   useEffect(() => {
     if (formData.idsiswa) {
-      const loadOrangtua = async () => {
-        try {
-          console.log("Loading orangtua for siswa ID:", formData.idsiswa);
-          const response = await axios.get(
-            `${API_URL}/get-orangtua/${formData.idsiswa}`
-          );
-          console.log("Orangtua API Response:", response.data);
+      // Set data siswa tambahan (NIS, NISN, Kelas)
+      const selectedSiswa = formOptions.siswa.find(s => s.value == formData.idsiswa);
+      console.log("Selected siswa:", selectedSiswa);
+      
+      if (selectedSiswa) {
+        setSiswaData({
+          nis: selectedSiswa.nis || "",
+          nisn: selectedSiswa.nisn || "",
+          kelas: selectedSiswa.kelas || "-"
+        });
+      }
 
-          if (response.data.success) {
-            const { nama_ortu, kontak, alamat } = response.data.data;
-            console.log("Raw data from API:", { nama_ortu, kontak, alamat });
-
-            // VALIDASI: Hanya set nilai yang tidak kosong atau "-"
-            const validatedData = {
-              nama: !isEmptyValue(nama_ortu) ? nama_ortu : "",
-              kontak: !isEmptyValue(kontak) ? kontak : "",
-              alamat: !isEmptyValue(alamat) ? alamat : "",
-            };
-
-            console.log("Validated data:", validatedData);
-
-            setFormData((prev) => ({
-              ...prev,
-              ...validatedData,
-            }));
-          } else {
-            console.warn("API returned success: false");
-            resetOrangtuaFields();
-          }
-        } catch (error) {
-          console.error("Gagal memuat data orangtua:", error);
-          console.error("Error details:", error.response?.data);
-          resetOrangtuaFields();
-        }
-      };
-
-      loadOrangtua();
+      // Reset kontak dan alamat (tetap kosong)
+      setFormData((prev) => ({
+        ...prev,
+        kontak: "", // Selalu dikosongkan
+        alamat: "", // Selalu dikosongkan
+        // NAMA TIDAK DIISI OTOMATIS - biarkan seperti yang sudah diisi user
+      }));
     } else {
-      // Reset jika siswa dipilih kosong
-      resetOrangtuaFields();
+      // Reset semua data siswa jika tidak ada siswa yang dipilih
+      setSiswaData({ nis: "", nisn: "", kelas: "-" });
+      setFormData((prev) => ({
+        ...prev,
+        kontak: "",
+        alamat: "",
+      }));
     }
-  }, [formData.idsiswa]);
-
-  // Fungsi validasi untuk mengecek nilai kosong
-  const isEmptyValue = (value) => {
-    if (!value) return true;
-    if (value.toString().trim() === "") return true;
-    if (value.toString().trim() === "-") return true;
-    if (value.toString().trim() === "null") return true;
-    if (value.toString().trim() === "undefined") return true;
-    return false;
-  };
-
-  // Fungsi untuk reset field orangtua
-  const resetOrangtuaFields = () => {
-    setFormData((prev) => ({
-      ...prev,
-      nama: "",
-      kontak: "",
-      alamat: "",
-    }));
-  };
+  }, [formData.idsiswa, formOptions.siswa]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -193,10 +117,32 @@ const ParentForm = () => {
   };
 
   const handleSelectChange = (name, selectedOption) => {
+    console.log(`Select ${name}:`, selectedOption);
+    
     setFormData((prev) => ({
       ...prev,
       [name]: selectedOption ? selectedOption.value : "",
     }));
+
+    // Jika yang dipilih adalah siswa, langsung set data siswa (NIS, NISN, Kelas)
+    if (name === 'idsiswa' && selectedOption) {
+      const selectedSiswa = formOptions.siswa.find(s => s.value == selectedOption.value);
+      if (selectedSiswa) {
+        setSiswaData({
+          nis: selectedSiswa.nis || "",
+          nisn: selectedSiswa.nisn || "",
+          kelas: selectedSiswa.kelas || "-"
+        });
+
+        // Reset kontak dan alamat, tapi JANGAN reset nama
+        setFormData((prev) => ({
+          ...prev,
+          kontak: "", // Reset kontak
+          alamat: "", // Reset alamat
+          // Nama tetap seperti yang sudah diisi user
+        }));
+      }
+    }
   };
 
   const handlePhotoCapture = (photoData) => {
@@ -213,6 +159,8 @@ const ParentForm = () => {
         role: "ortu",
       };
 
+      console.log('Submitting data:', submitData);
+
       const response = await axios.post(
         `${API_URL}/guestbook/store`,
         submitData
@@ -220,22 +168,20 @@ const ParentForm = () => {
 
       if (response.data.success) {
         alert("✅ Data berhasil disimpan!");
-        // Reset form
         setFormData({
           nama: "",
           idsiswa: "",
           kontak: "",
           alamat: "",
-          id_jabatan: "",
           id_pegawai: "",
           keperluan: "",
           foto_tamu: "",
         });
+        setSiswaData({ nis: "", nisn: "", kelas: "-" });
         
-        // REDIRECT KE ROUTE / SETELAH BERHASIL
         setTimeout(() => {
-          navigate("/"); // INI YANG DITAMBAHKAN
-        }, 1000); // Delay 1 detik agar user bisa baca alert
+          navigate("/");
+        }, 1000);
       } else {
         alert("❌ Gagal menyimpan data: " + response.data.message);
       }
@@ -252,21 +198,22 @@ const ParentForm = () => {
       <WebcamCapture onCapture={handlePhotoCapture} />
 
       <div className="grid md:grid-cols-2 gap-6">
+        {/* Dropdown Siswa */}
         <SelectField
           label="Orang Tua dari Siswa"
           icon={UserCheck}
           options={formOptions.siswa}
           value={
-            formOptions.siswa.find((opt) => opt.value === formData.idsiswa) ||
-            null
+            formOptions.siswa.find((opt) => opt.value == formData.idsiswa) || null
           }
           onChange={(selected) => handleSelectChange("idsiswa", selected)}
           isSearchable={true}
           required
         />
 
+        {/* Nama Orang Tua - TIDAK DIISI OTOMATIS */}
         <InputField
-          label="Nama Orang Tua"
+          label="Nama Orang Tua / Wali Yang Hadir"
           id="namaOrtu"
           icon={User}
           placeholder="Masukkan nama lengkap"
@@ -276,6 +223,57 @@ const ParentForm = () => {
           required
         />
 
+        {/* Display NIS dan NISN */}
+        {(siswaData.nis || siswaData.nisn) && (
+          <div className="md:col-span-2 grid grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">
+                NIS
+              </label>
+              <div className="relative">
+                <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 text-green-600" size={18} />
+                <input
+                  type="text"
+                  value={siswaData.nis}
+                  className="w-full pl-10 pr-4 py-2 border border-green-300 bg-green-50 rounded-lg text-green-700 font-medium"
+                  readOnly
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">
+                NISN
+              </label>
+              <div className="relative">
+                <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 text-green-600" size={18} />
+                <input
+                  type="text"
+                  value={siswaData.nisn}
+                  className="w-full pl-10 pr-4 py-2 border border-green-300 bg-green-50 rounded-lg text-green-700 font-medium"
+                  readOnly
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Display Kelas Siswa */}
+        <div className="md:col-span-2">
+          <label className="block font-semibold text-slate-700 mb-1">
+            Kelas
+          </label>
+          <div className="relative">
+            <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" size={18} />
+            <input
+              type="text"
+              value={siswaData.kelas}
+              className="w-full pl-10 pr-4 py-2 border border-blue-300 bg-blue-50 rounded-lg text-blue-700 font-medium"
+              readOnly
+            />
+          </div>
+        </div>
+
+        {/* Field yang dikosongkan otomatis */}
         <InputField
           label="Nomor Handphone"
           id="kontakOrtu"
@@ -299,31 +297,16 @@ const ParentForm = () => {
           required
         />
 
+        {/* Dropdown Pegawai */}
         <SelectField
-          label="Bertemu Dengan (Jabatan)"
-          icon={Briefcase}
-          options={formOptions.jabatan}
+          label="Bertemu Dengan"
+          icon={UserIcon}
+          options={formOptions.pegawai}
           value={
-            formOptions.jabatan.find(
-              (opt) => opt.value === formData.id_jabatan
-            ) || null
-          }
-          onChange={(selected) => handleSelectChange("id_jabatan", selected)}
-          isSearchable={true}
-          required
-        />
-
-        <SelectField
-          label="Nama Pegawai / Guru"
-          icon={User}
-          options={pegawaiOptions}
-          value={
-            pegawaiOptions.find((opt) => opt.value === formData.id_pegawai) ||
-            null
+            formOptions.pegawai.find((opt) => opt.value == formData.id_pegawai) || null
           }
           onChange={(selected) => handleSelectChange("id_pegawai", selected)}
           isSearchable={true}
-          isDisabled={formData.id_jabatan == 1}
           required
         />
       </div>

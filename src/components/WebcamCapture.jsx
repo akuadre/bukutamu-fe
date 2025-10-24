@@ -1,7 +1,7 @@
-// src/components/WebcamCapture.jsx
+// src/components-guestbook/WebcamCapture.jsx
 import React, { useState, useCallback, useRef } from "react";
 import Webcam from "react-webcam";
-import { Camera, Check, RefreshCw } from "lucide-react";
+import { Camera, RefreshCw } from "lucide-react";
 
 const videoConstraints = {
   width: 320,
@@ -11,17 +11,20 @@ const videoConstraints = {
 
 const WebcamCapture = ({ onCapture }) => {
   const [image, setImage] = useState(null);
+  const [fotoTaken, setFotoTaken] = useState(false); // Poin 3: State untuk konfirmasi
   const webcamRef = useRef(null);
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current.getScreenshot();
     setImage(imageSrc);
-    onCapture(imageSrc); // Mengirim data gambar ke parent
+    setFotoTaken(true); // Poin 3: Set status foto sudah diambil
+    onCapture(imageSrc);
   }, [webcamRef, onCapture]);
 
   const retake = () => {
     setImage(null);
-    onCapture(null); // Reset data gambar
+    setFotoTaken(false); // Poin 3: Reset status foto
+    onCapture(null);
   };
 
   return (
@@ -48,6 +51,14 @@ const WebcamCapture = ({ onCapture }) => {
             />
           )}
         </div>
+        
+        {/* Poin 3: Teks konfirmasi foto */}
+        {fotoTaken && (
+          <div className="text-center">
+            <p className="text-green-600 font-medium text-lg">✓ Foto Sudah Berhasil Diambil</p>
+          </div>
+        )}
+        
         <div>
           {image ? (
             <button

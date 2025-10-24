@@ -1,13 +1,13 @@
-// src/components/GeneralGuestForm.jsx
+// src/components-guestbook/GeneralGuestForm.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // TAMBAHKAN INI
+import { useNavigate } from "react-router-dom";
 import {
   User,
   Phone,
   Building,
   MapPin,
-  Briefcase,
   MessageSquare,
+  User as UserIcon,
 } from "lucide-react";
 import { InputField, SelectField } from "./InputField";
 import WebcamCapture from "./WebcamCapture";
@@ -16,42 +16,36 @@ import axios from "axios";
 const API_URL = "http://localhost:8000/api";
 
 const GeneralGuestForm = () => {
-  const navigate = useNavigate(); // TAMBAHKAN INI
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     nama: "",
     instansi: "",
     kontak: "",
     alamat: "",
-    id_jabatan: "",
-    id_pegawai: "",
+    id_pegawai: "", // PEGAWAI TETAP ADA
     keperluan: "",
     foto_tamu: "",
   });
 
   const [formOptions, setFormOptions] = useState({
-    jabatan: [],
-    pegawai: [],
+    pegawai: [], // HANYA PEGAWAI, JABATAN DIHAPUS
   });
 
-  const [pegawaiOptions, setPegawaiOptions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Load form data dari API
+  // Load form data dari API - HANYA LOAD PEGAWAI
   useEffect(() => {
     const loadFormData = async () => {
       try {
         const response = await axios.get(`${API_URL}/guestbook/data`);
         if (response.data.success) {
           setFormOptions({
-            jabatan: response.data.data.jabatan.map((j) => ({
-              value: j.id,
-              label: j.nama_jabatan,
-            })),
-            pegawai: response.data.data.pegawai.map((p) => ({
-              value: p.id,
-              label: p.nama_pegawai,
-            })),
+            pegawai: Array.isArray(response.data.data.pegawai) ? 
+              response.data.data.pegawai.map((p) => ({
+                value: p.id,
+                label: p.nama_pegawai,
+              })) : [],
           });
         }
       } catch (error) {
@@ -61,40 +55,6 @@ const GeneralGuestForm = () => {
 
     loadFormData();
   }, []);
-
-  // Load pegawai ketika jabatan berubah
-  useEffect(() => {
-    if (formData.id_jabatan) {
-      const loadPegawai = async () => {
-        try {
-          const response = await axios.get(
-            `${API_URL}/get-pegawai/${formData.id_jabatan}`
-          );
-          if (response.data.success) {
-            const pegawaiData = response.data.data.map((p) => ({
-              value: p.id,
-              label: p.nama_pegawai,
-            }));
-            setPegawaiOptions(pegawaiData);
-
-            // Auto-select kepala sekolah jika jabatan = 1
-            if (formData.id_jabatan == 1 && pegawaiData.length > 0) {
-              setFormData((prev) => ({
-                ...prev,
-                id_pegawai: pegawaiData[0].value,
-              }));
-            }
-          }
-        } catch (error) {
-          console.error("Gagal memuat data pegawai:", error);
-        }
-      };
-
-      loadPegawai();
-    } else {
-      setPegawaiOptions([]);
-    }
-  }, [formData.id_jabatan]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -132,22 +92,19 @@ const GeneralGuestForm = () => {
 
       if (response.data.success) {
         alert("✅ Data berhasil disimpan!");
-        // Reset form
         setFormData({
           nama: "",
           instansi: "",
           kontak: "",
           alamat: "",
-          id_jabatan: "",
           id_pegawai: "",
           keperluan: "",
           foto_tamu: "",
         });
         
-        // REDIRECT KE ROUTE / SETELAH BERHASIL
         setTimeout(() => {
-          navigate("/"); // INI YANG DITAMBAHKAN
-        }, 1000); // Delay 1 detik agar user bisa baca alert
+          navigate("/");
+        }, 1000);
       } else {
         alert("❌ Gagal menyimpan data: " + response.data.message);
       }
@@ -209,31 +166,17 @@ const GeneralGuestForm = () => {
           required
         />
 
+        {/* PEGAWAI TETAP ADA */}
         <SelectField
-          label="Bertemu Dengan (Jabatan)"
-          icon={Briefcase}
-          options={formOptions.jabatan}
+          label="Bertemu Dengan"
+          icon={UserIcon}
+          options={formOptions.pegawai}
           value={
-            formOptions.jabatan.find(
-              (opt) => opt.value === formData.id_jabatan
-            ) || null
-          }
-          onChange={(selected) => handleSelectChange("id_jabatan", selected)}
-          isSearchable={true}
-          required
-        />
-
-        <SelectField
-          label="Nama Pegawai / Guru"
-          icon={User}
-          options={pegawaiOptions}
-          value={
-            pegawaiOptions.find((opt) => opt.value === formData.id_pegawai) ||
+            formOptions.pegawai.find((opt) => opt.value === formData.id_pegawai) ||
             null
           }
           onChange={(selected) => handleSelectChange("id_pegawai", selected)}
           isSearchable={true}
-          isDisabled={formData.id_jabatan == 1}
           required
         />
       </div>
