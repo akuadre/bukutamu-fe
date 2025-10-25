@@ -125,24 +125,15 @@ const LoadingTable = ({ rowsPerPage }) => (
             Role
           </th>
           <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Nama Siswa
-          </th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
             Bertemu Dengan
           </th>
           <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
             Keperluan
           </th>
           <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Foto
-          </th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-            Tahun Ajaran
-          </th>
-          <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
             Tanggal
           </th>
-          <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+          <th className="px-3 py-3 w-20 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
             Aksi
           </th>
         </tr>
@@ -166,22 +157,10 @@ const LoadingTable = ({ rowsPerPage }) => (
               ></div>
             </td>
             <td className="py-4 px-3">
-              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-            </td>
-            <td className="py-4 px-3">
               <div className="h-4 bg-gray-200 rounded w-1/2"></div>
             </td>
             <td className="py-4 px-3">
               <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-            </td>
-            <td className="py-4 px-3 text-center">
-              <div className="w-16 h-16 bg-gray-200 rounded-md mx-auto"></div>
-            </td>
-            <td className="py-4 px-3 text-center">
-              <div
-                className="h-4 bg-gray-200 rounded mx-auto"
-                style={{ width: "100px" }}
-              ></div>
             </td>
             <td className="py-4 px-3 text-center">
               <div
@@ -192,7 +171,7 @@ const LoadingTable = ({ rowsPerPage }) => (
             <td className="py-4 px-3 text-center">
               <div
                 className="h-8 bg-gray-200 rounded mx-auto"
-                style={{ width: "100px" }}
+                style={{ width: "60px" }}
               ></div>
             </td>
           </tr>
@@ -239,10 +218,10 @@ const IconWhatsApp = (props) => (
 );
 
 // =================================================================
-// MODAL DETAIL BUKU TAMU
+// MODAL DETAIL BUKU TAMU (DENGAN TOMBOL HAPUS)
 // =================================================================
 
-const BukuTamuDetailModal = ({ tamu, onClose, loading }) => {
+const BukuTamuDetailModal = ({ tamu, onClose, loading, onDelete }) => {
   if (!tamu && !loading) return null;
 
   const formatPhoneNumber = (phone) => {
@@ -275,32 +254,42 @@ const BukuTamuDetailModal = ({ tamu, onClose, loading }) => {
         </div>
       ) : (
         <div className="space-y-6 max-h-[85vh] overflow-y-auto">
-          {/* FOTO DAN IDENTITAS UTAMA */}
-          <div className="text-center bg-gray-50 p-6 rounded-xl">
-            {tamu.foto_tamu ? (
-              <img
-                src={`${IMG_URL}${tamu.foto_tamu}`}
-                alt={`Foto ${tamu.nama}`}
-                className="w-32 h-32 object-cover rounded-full mx-auto shadow-md border-4 border-white"
-              />
-            ) : (
-              <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center mx-auto">
-                <Camera size={48} className="text-gray-400" />
-              </div>
-            )}
-            <h3 className="text-2xl font-bold mt-4 text-gray-900">
-              {tamu.nama}
-            </h3>
-            <p className="text-gray-500 capitalize">
-              {tamu.role === "ortu"
-                ? `Orang Tua dari ${tamu.siswa?.namasiswa || "-"}`
-                : tamu.instansi || "Tamu Umum"}
-            </p>
-            {tamu.tahun_ajaran && (
-              <p className="text-sm text-blue-600 mt-1">
-                Tahun Ajaran: {tamu.tahun_ajaran.thnajaran}
+          {/* HEADER DENGAN TOMBOL HAPUS */}
+          <div className="flex justify-between items-start">
+            <div className="text-center bg-gray-50 p-6 rounded-xl flex-1">
+              {tamu.foto_tamu ? (
+                <img
+                  src={`${IMG_URL}${tamu.foto_tamu}`}
+                  alt={`Foto ${tamu.nama}`}
+                  className="w-32 h-32 object-cover rounded-full mx-auto shadow-md border-4 border-white"
+                />
+              ) : (
+                <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center mx-auto">
+                  <Camera size={48} className="text-gray-400" />
+                </div>
+              )}
+              <h3 className="text-2xl font-bold mt-4 text-gray-900">
+                {tamu.nama}
+              </h3>
+              <p className="text-gray-500 capitalize">
+                {tamu.role === "ortu"
+                  ? `Orang Tua dari ${tamu.siswa?.namasiswa || "-"}`
+                  : tamu.instansi || "Tamu Umum"}
               </p>
-            )}
+              {tamu.tahun_ajaran && (
+                <p className="text-sm text-blue-600 mt-1">
+                  Tahun Ajaran: {tamu.tahun_ajaran.thnajaran}
+                </p>
+              )}
+            </div>
+            
+            {/* TOMBOL HAPUS DI MODAL DETAIL */}
+            <button
+              onClick={() => onDelete(tamu)}
+              className="bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition flex items-center gap-2 ml-4"
+            >
+              <Trash2 size={20} />
+            </button>
           </div>
 
           {/* INFORMASI TAMU */}
@@ -528,6 +517,7 @@ const BukuTamu = () => {
       await axios.delete(`${API_URL}/bukutamu/${id}`);
       showNotif("success", "Data buku tamu berhasil dihapus.");
       fetchData(currentPage, debouncedTerm, rowsPerPage, selectedTahunAjaran);
+      setIsDetailModalOpen(false); // Tutup modal detail setelah hapus
     } catch (err) {
       showNotif("error", "Gagal menghapus data buku tamu.");
     } finally {
@@ -539,6 +529,10 @@ const BukuTamu = () => {
   const confirmDelete = (tamu) => {
     setTamuToDelete(tamu);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteFromDetail = (tamu) => {
+    confirmDelete(tamu);
   };
 
   const closeDetailModal = () => {
@@ -693,24 +687,15 @@ const BukuTamu = () => {
                     Role
                   </th>
                   <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
-                    Nama Siswa
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
                     Bertemu Dengan
                   </th>
                   <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider text-left">
                     Keperluan
                   </th>
                   <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Foto
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
-                    Tahun Ajaran
-                  </th>
-                  <th className="px-3 py-3 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
                     Tanggal
                   </th>
-                  <th className="px-3 py-3 w-32 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
+                  <th className="px-3 py-3 w-20 border-[0.5px] border-gray-600 text-xs font-medium uppercase tracking-wider">
                     Aksi
                   </th>
                 </tr>
@@ -733,46 +718,21 @@ const BukuTamu = () => {
                       {tamu.role === "ortu" ? "Orang Tua" : "Tamu Umum"}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-left">
-                      {tamu.siswa?.namasiswa || "-"}
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-left">
                       {tamu.pegawai?.namapegawai || "-"}
                     </td>
                     <td className="px-3 py-3 whitespace-normal max-w-xs">
                       {tamu.keperluan}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-center">
-                      {tamu.foto_tamu ? (
-                        <img
-                          src={`${IMG_URL}${tamu.foto_tamu}`}
-                          alt="Foto Tamu"
-                          className="w-16 h-16 object-cover rounded-md shadow-sm mx-auto"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center mx-auto">
-                          <Camera size={24} className="text-gray-400" />
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-center">
-                      {tamu.tahun_ajaran?.thnajaran || "-"}
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-center">
                       {formatDate(tamu.created_at)}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-center">
-                      <div className="flex justify-center gap-2">
+                      <div className="flex justify-center">
                         <button
                           onClick={() => handleViewDetail(tamu.id)}
                           className="bg-sky-100 text-sky-800 font-semibold p-2 rounded-lg hover:bg-sky-200 transition flex items-center gap-1"
                         >
                           <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => confirmDelete(tamu)}
-                          className="bg-red-100 text-red-800 font-semibold p-2 rounded-lg hover:bg-red-200 transition flex items-center gap-1"
-                        >
-                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -780,7 +740,7 @@ const BukuTamu = () => {
                 ))}
                 {!loading && bukuTamu.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="text-center py-6 text-gray-500">
+                    <td colSpan={7} className="text-center py-6 text-gray-500">
                       {debouncedTerm || selectedTahunAjaran
                         ? "Tidak ada data yang cocok dengan filter yang dipilih."
                         : "Tidak ada data buku tamu."}
@@ -840,13 +800,14 @@ const BukuTamu = () => {
         )}
       </motion.div>
 
-      {/* MODAL DETAIL */}
+      {/* MODAL DETAIL DENGAN TOMBOL HAPUS */}
       <AnimatePresence>
         {isDetailModalOpen && (
           <BukuTamuDetailModal
             tamu={selectedTamu}
             onClose={closeDetailModal}
             loading={loadingDetail}
+            onDelete={handleDeleteFromDetail}
           />
         )}
       </AnimatePresence>
