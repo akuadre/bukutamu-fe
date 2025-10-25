@@ -55,10 +55,12 @@ const ParentForm = () => {
             siswa: Array.isArray(response.data.data.siswa) ? 
               response.data.data.siswa.map((s) => ({
                 value: s.value || s.idsiswa,
-                label: s.label || s.namasiswa,
+                // FORMAT BARU: NISN | NAMA SISWA
+                label: `${s.nisn || '-'} | ${s.label || s.namasiswa}`,
                 nis: s.nis,
                 nisn: s.nisn,
-                kelas: s.kelas
+                kelas: s.kelas,
+                namaSiswa: s.label || s.namasiswa // Simpan nama siswa terpisah
               })) : [],
             pegawai: Array.isArray(response.data.data.pegawai) ? 
               response.data.data.pegawai.map((p) => ({
@@ -66,6 +68,8 @@ const ParentForm = () => {
                 label: p.nama_pegawai,
               })) : [],
           });
+          
+          console.log('Formatted siswa options:', formOptions.siswa);
         }
       } catch (error) {
         console.error("Gagal memuat data form:", error);
@@ -193,12 +197,20 @@ const ParentForm = () => {
     }
   };
 
+  // Custom format untuk menampilkan opsi di dropdown
+  const formatOptionLabel = ({ label, value }) => (
+    <div className="flex flex-col">
+      <span className="font-medium">{label}</span>
+      {/* Tambahkan info tambahan jika diperlukan */}
+    </div>
+  );
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <WebcamCapture onCapture={handlePhotoCapture} />
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Dropdown Siswa */}
+        {/* Dropdown Siswa dengan format baru */}
         <SelectField
           label="Orang Tua dari Siswa"
           icon={UserCheck}
@@ -208,6 +220,8 @@ const ParentForm = () => {
           }
           onChange={(selected) => handleSelectChange("idsiswa", selected)}
           isSearchable={true}
+          formatOptionLabel={formatOptionLabel}
+          placeholder="Cari dengan NISN atau nama siswa..."
           required
         />
 
