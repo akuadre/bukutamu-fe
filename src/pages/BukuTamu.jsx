@@ -254,42 +254,35 @@ const BukuTamuDetailModal = ({ tamu, onClose, loading, onDelete }) => {
         </div>
       ) : (
         <div className="space-y-6 max-h-[85vh] overflow-y-auto">
-          {/* HEADER DENGAN TOMBOL HAPUS */}
-          <div className="flex justify-between items-start">
-            <div className="text-center bg-gray-50 p-6 rounded-xl flex-1">
-              {tamu.foto_tamu ? (
+          {/* FOTO BESAR HORIZONTAL */}
+          <div className="text-center bg-gray-50 p-6 rounded-xl">
+            {tamu.foto_tamu ? (
+              <div className="flex justify-center">
                 <img
                   src={`${IMG_URL}${tamu.foto_tamu}`}
-                  alt={`Foto ${tamu.nama}`}
-                  className="w-32 h-32 object-cover rounded-full mx-auto shadow-md border-4 border-white"
+                  // alt={`Foto ${tamu.nama}`}
+                  alt='Foto Tamu'
+                  className="w-64 h-48 object-cover rounded-xl shadow-md border-4 border-white"
                 />
-              ) : (
-                <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center mx-auto">
-                  <Camera size={48} className="text-gray-400" />
-                </div>
-              )}
-              <h3 className="text-2xl font-bold mt-4 text-gray-900">
-                {tamu.nama}
-              </h3>
-              <p className="text-gray-500 capitalize">
-                {tamu.role === "ortu"
-                  ? `Orang Tua dari ${tamu.siswa?.namasiswa || "-"}`
-                  : tamu.instansi || "Tamu Umum"}
+              </div>
+            ) : (
+              <div className="w-64 h-48 bg-gray-200 rounded-xl flex items-center justify-center mx-auto">
+                <Camera size={48} className="text-gray-400" />
+              </div>
+            )}
+            <h3 className="text-2xl font-bold mt-4 text-gray-900">
+              {tamu.nama}
+            </h3>
+            <p className="text-gray-500 capitalize">
+              {tamu.role === "ortu"
+                ? `Orang Tua dari ${tamu.siswa?.namasiswa || "-"}`
+                : tamu.instansi || "Tamu Umum"}
+            </p>
+            {tamu.tahun_ajaran && (
+              <p className="text-sm text-blue-600 mt-1">
+                Tahun Ajaran: {tamu.tahun_ajaran.thnajaran}
               </p>
-              {tamu.tahun_ajaran && (
-                <p className="text-sm text-blue-600 mt-1">
-                  Tahun Ajaran: {tamu.tahun_ajaran.thnajaran}
-                </p>
-              )}
-            </div>
-            
-            {/* TOMBOL HAPUS DI MODAL DETAIL */}
-            <button
-              onClick={() => onDelete(tamu)}
-              className="bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition flex items-center gap-2 ml-4"
-            >
-              <Trash2 size={20} />
-            </button>
+            )}
           </div>
 
           {/* INFORMASI TAMU */}
@@ -375,6 +368,17 @@ const BukuTamuDetailModal = ({ tamu, onClose, loading, onDelete }) => {
               icon={<Calendar size={16} className="text-gray-400" />}
             />
           </DetailSection>
+
+          {/* TOMBOL HAPUS DI BAWAH */}
+          <div className="flex justify-center pt-4 border-t border-gray-200">
+            <button
+              onClick={() => onDelete(tamu)}
+              className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition flex items-center gap-2 font-medium"
+            >
+              <Trash2 size={20} />
+              Hapus Data Kunjungan
+            </button>
+          </div>
         </div>
       )}
     </Modal>
