@@ -6,6 +6,7 @@ import {
   PlusCircle,
   Camera,
   Eye,
+  Info,
   Trash2,
   X,
   User,
@@ -736,7 +737,8 @@ const BukuTamu = () => {
                           onClick={() => handleViewDetail(tamu.id)}
                           className="bg-sky-100 text-sky-800 font-semibold p-2 rounded-lg hover:bg-sky-200 transition flex items-center gap-1"
                         >
-                          <Eye className="w-4 h-4" />
+                          {/* <Eye className="w-4 h-4" /> */}
+                          <Info className="w-4 h-4" /> Detail
                         </button>
                       </div>
                     </td>
