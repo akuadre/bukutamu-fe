@@ -50,15 +50,14 @@ function App() {
         <Route path="/input" element={<GuestbookPage />} />
 
         {/* Jika user sudah login dan mengakses /login, redirect ke page lain */}
-        <Route
+        {/* <Route
           path="/login"
           element={
             <ProtectedRoute>
-              {/* <Navigate to="/dashboard" replace /> */}
               <Navigate to="/" replace />
             </ProtectedRoute>
           }
-        />
+        /> */}
 
         {/* Jika rute tidak ditemukan, arahkan ke halaman utama */}
         {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
