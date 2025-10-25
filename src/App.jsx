@@ -49,18 +49,20 @@ function App() {
         {/* Rute input buku tamu */}
         <Route path="/input" element={<GuestbookPage />} />
 
-        {/* Jika user sudah login dan mengakses /login, redirect ke dashboard */}
+        {/* Jika user sudah login dan mengakses /login, redirect ke page lain */}
         <Route
           path="/login"
           element={
             <ProtectedRoute>
-              <Navigate to="/dashboard" replace />
+              {/* <Navigate to="/dashboard" replace /> */}
+              <Navigate to="/" replace />
             </ProtectedRoute>
           }
         />
 
         {/* Jika rute tidak ditemukan, arahkan ke halaman utama */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
